@@ -14,12 +14,12 @@ kotter
 <!-- tocstop -->
 # Usage
 <!-- usage -->
-```sh-session
+```shell
 $ npm install -g kotter
 $ kotter COMMAND
 running command...
 $ kotter (-v|--version|version)
-kotter/0.0.0 win32-x64 node-v10.16.0
+kotter/0.0.3 win32-x64 node-v10.16.0
 $ kotter --help [COMMAND]
 USAGE
   $ kotter COMMAND
@@ -28,8 +28,25 @@ USAGE
 <!-- usagestop -->
 # Commands
 <!-- commands -->
+* [`kotter goodbye [FILE]`](#kotter-goodbye-file)
 * [`kotter hello [FILE]`](#kotter-hello-file)
 * [`kotter help [COMMAND]`](#kotter-help-command)
+
+## `kotter goodbye [FILE]`
+
+describe the command here
+
+```
+USAGE
+  $ kotter goodbye [FILE]
+
+OPTIONS
+  -f, --force
+  -h, --help       show CLI help
+  -n, --name=name  name to print
+```
+
+_See code: [src\commands\goodbye.ts](https://github.com/anishLearnsToCode/kotter/blob/v0.0.3/src\commands\goodbye.ts)_
 
 ## `kotter hello [FILE]`
 
@@ -49,7 +66,7 @@ EXAMPLE
   hello world from ./src/hello.ts!
 ```
 
-_See code: [src\commands\hello.ts](https://github.com/anishLearnsToCode/kotter/blob/v0.0.0/src\commands\hello.ts)_
+_See code: [src\commands\hello.ts](https://github.com/anishLearnsToCode/kotter/blob/v0.0.3/src\commands\hello.ts)_
 
 ## `kotter help [COMMAND]`
 
