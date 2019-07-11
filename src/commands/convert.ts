@@ -1,4 +1,6 @@
 import {Command, flags} from '@oclif/command'
+import fs = require("fs");
+
 
 export class ConvertCommandArguments {
   public filePath: string;
@@ -35,9 +37,16 @@ export default class ConvertCommand extends Command {
     this.log('flags', flags);
 
     if (args.filePath) {
-      this.log(args.filePath);p
-    } else {
-      this.error('file path must be provided');
+      const file = fs.readFileSync(this.getFilePath(args.filePath));
+      this.log(file.toString());
+
+      return ;
     }
+
+    this.error('file path must be provided');
+  }
+
+  private getFilePath(relativeFilePath: string): string {
+    return __dirname + '\\' + relativeFilePath;
   }
 }
