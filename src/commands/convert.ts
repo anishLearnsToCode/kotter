@@ -1,5 +1,8 @@
 import {Command, flags} from '@oclif/command'
 import fs = require("fs");
+import {exec} from "child_process";
+import {CompilerService} from "../services/compiler.service";
+import {FileService} from "../services/file.service";
 
 
 export class ConvertCommandArguments {
@@ -31,22 +34,24 @@ export default class ConvertCommand extends Command {
 
   static args = [{name: 'filePath'}];
 
+  private readonly compilerService = CompilerService.getService();
+  private readonly fileService = FileService.getService();
+
   async run() {
     const {args, flags} = this.parse(ConvertCommand);
-    console.log('arguments', args);
-    this.log('flags', flags);
 
-    if (args.filePath) {
-      const file = fs.readFileSync(this.getFilePath(args.filePath));
-      this.log(file.toString());
-
-      return ;
+    if (!args.filePath) {
+      this.error('file path must be provided');
     }
 
-    this.error('file path must be provided');
-  }
+    // if (!this.isJavaScriptFile(args.filePath)) {
+    //   this.error('file must be a js file');
+    // }
 
-  private getFilePath(relativeFilePath: string): string {
-    return __dirname + '\\' + relativeFilePath;
+    if (this.compilerService.createConvertedJavaScriptFile(args.filePath)) {
+      this.log(args.filePath + ' file has been converted successfully :D');
+    } else {
+      this.error(args.filePath + ' was not converted successfully');
+    }
   }
 }
