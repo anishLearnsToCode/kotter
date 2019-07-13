@@ -229,3 +229,7 @@ for (let { user, age = "DEFAULT AGE" } of users) {
 // => Name2 2
 // => Name2 DEFAULT AGE
 // => Name3 4
+
+(() => {
+  console.log('anonymous as hell');
+});
