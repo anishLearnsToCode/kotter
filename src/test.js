@@ -1,3 +1,5 @@
+let variable;
+
 let person = {
   firstName: "anish",
   lastName: "sachdeva",
@@ -11,6 +13,9 @@ let person = {
     firstName: "meenu"
   }
 };
+
+let firstName = person.firstName;
+console.log(person);
 
 console.log(Object.getPrototypeOf(person));
 
@@ -31,6 +36,7 @@ function ping(array) {
   let b = array[2];
   console.log(Object.getPrototypeOf(a), b);
 }
+
 function ping2([, a, b]) {
   console.log(a, b);
 }
@@ -80,3 +86,8 @@ while (iter-- > 0) {
 do {
   // console.log(iter);
 } while (iter-- > 0);
+
+let first, second;
+({first, second} = {a: 1, b: 2});
+
+(console.log('hello anonymous'));

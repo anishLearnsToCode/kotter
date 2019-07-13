@@ -6,7 +6,7 @@ describe('goodbye', () => {
     .command(['goodbye'])
     .it('runs hello', ctx => {
       expect(ctx.stdout).to.contain('hello world')
-    })
+    });
 
   test
     .stdout()
@@ -14,4 +14,4 @@ describe('goodbye', () => {
     .it('runs hello --name jeff', ctx => {
       expect(ctx.stdout).to.contain('hello jeff')
     })
-})
+});

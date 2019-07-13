@@ -15,11 +15,10 @@ export class JavaScriptFile {
     this.filePath = this.fileService.getRootFilePath(fileName);
     this.file = fs.readFileSync(this.filePath);
     this.data = this.file.toString();
-    // console.log(this.data);
 
-    for (let word of this.file) {
-      console.log(String.fromCharCode(word));
-    }
+    // for (let word of this.file) {
+    //   // console.log(String.fromCharCode(word));
+    // }
   }
 
   public prettify() {
