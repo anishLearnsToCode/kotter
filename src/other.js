@@ -39,13 +39,18 @@ console.log(a, b);
 
 
 // Advance deep arrays
-let c,d;
-[a, [b, [c, d]]] = [1, [2, [[[3, 4], 5], 6]]];
+let c, d = 3;
+[a, [b, [c, d]]];
+  [a, [b, [c, d]]] = [1, [2, [[[3, 4], 5], 6]]];
 console.log("a:", a, "b:", b, "c:", c, "d:", d);
 // => a: 1 b: 2 c: [ [ 3, 4 ], 5 ] d: 6
 
 
 // === Objects
+
+// This is not allowed
+// ({user: x});
+
 
 ({user: x} = {user: 5});
 console.log(x);
