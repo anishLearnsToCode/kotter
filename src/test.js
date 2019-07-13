@@ -91,3 +91,5 @@ let first, second;
 ({first, second} = {a: 1, b: 2});
 
 (console.log('hello anonymous'));
+
+console;
