@@ -129,9 +129,6 @@ if (anish instanceof Person) {
 
 // classes example and inheritance sample
 class SuperHero extends Person {
-  canFly;
-  canShootLasers = false;
-
   constructor(canFly, canShootLasers) {
     super(anish);
     this.canFly = canFly;
@@ -164,3 +161,27 @@ class Dog extends Animal {
 
 let d = new Dog('Mitzie');
 d.speak(); // Mitzie barks.
+
+// try catch block
+
+try {
+  throw "this is my exception";
+} catch (e) {
+  console.log(e);
+}
+
+// complex try-catch-finally block
+try {
+  myroutine(); // may throw three types of exceptions
+} catch (e if e instanceof TypeError) {
+  // statements to handle TypeError exceptions
+} catch (e if e instanceof RangeError) {
+  // statements to handle RangeError exceptions
+} catch (e if e instanceof EvalError) {
+  // statements to handle EvalError exceptions
+} catch (e) {
+  // statements to handle any unspecified exceptions
+  // pass exception object to error handler
+} finally {
+  console.log('i am in the finally block ');
+}
