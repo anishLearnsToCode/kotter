@@ -121,3 +121,46 @@ let first, second;
 (console.log('hello anonymous'));
 
 console;
+
+// instanceof sample
+if (anish instanceof Person) {
+  console.log('anish is human !!');
+}
+
+// classes example and inheritance sample
+class SuperHero extends Person {
+  canFly;
+  canShootLasers = false;
+
+  constructor(canFly, canShootLasers) {
+    super(anish);
+    this.canFly = canFly;
+    this.canShootLasers = canShootLasers;
+  }
+}
+
+let superman = new SuperHero(true, true);
+console.log(superman);
+
+class Animal {
+  constructor(name) {
+    this.name = name;
+  }
+
+  speak() {
+    console.log(`${this.name} makes a noise.`);
+  }
+}
+
+class Dog extends Animal {
+  constructor(name) {
+    super(name); // call the super class constructor and pass in the name parameter
+  }
+
+  speak() {
+    console.log(`${this.name} barks.`);
+  }
+}
+
+let d = new Dog('Mitzie');
+d.speak(); // Mitzie barks.
