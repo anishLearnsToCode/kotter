@@ -72,6 +72,11 @@ let { prop, prop2} = {prop: 5, prop2: 10};
 console.log(prop, prop2);
 // => 5 10
 
+// different types that are available in an object deconstructing expression
+let prop6;
+({prop, prop2: prop2, prop3, prop4, prop5, prop6} = {prop: false, prop2: 2, prop3: 1, prop4: 1, prop5: 1, prop6: () => 'other'});
+console.log('heyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy', prop6());
+
 // Equal to:
 ({ prop: prop, prop2: prop2} = {prop: 5, prop2: 10});
 console.log(prop, prop2);
@@ -130,6 +135,18 @@ console.log(x, b);
 foo = function ({prop: x}) {
   console.log(x);
 };
+pa
+
+// Object Expression is possible
+let testObj = {
+  testObj: 12
+};
+
+let anish = sachdeva = 'test';
+
+
+//Array Expression is possible
+// [1, 2, 3];
 
 foo({invalid: 1});
 foo({prop: 1});
@@ -230,6 +247,10 @@ for (let { user, age = "DEFAULT AGE" } of users) {
 // => Name2 DEFAULT AGE
 // => Name3 4
 
-(() => {
+
+() => {
   console.log('anonymous as hell');
-});
+};
+
+// Loops example
+
