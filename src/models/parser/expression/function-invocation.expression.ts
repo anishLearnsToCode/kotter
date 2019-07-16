@@ -7,12 +7,12 @@ import {ParserService} from "../../../services/parser.service";
 export class FunctionInvocationExpression extends Expression implements Codeable {
   arguments: Array<VariableExpression> = []; // DE to be added later
 
-  constructor(parent: Scope, target: string, value: FunctionInvocationExpression | VariableExpression) {
+  constructor(parent: Scope, target: string, value: FunctionInvocationExpression | VariableExpression | null) {
     super(parent, target, value);
   }
 
   code(): string {
-    return "";
+    return 'i am func()';
   }
 
   public static parseFromForParent(code: string, parent: Scope): FunctionInvocationExpression {
@@ -25,6 +25,6 @@ export class FunctionInvocationExpression extends Expression implements Codeable
 
     const attribute = parser.getAttributeConstructFor(code, parent);
 
-    return new VariableExpression(parent, code.trim(), null);
+    return new FunctionInvocationExpression(parent, code.trim(), null);
   }
 }
