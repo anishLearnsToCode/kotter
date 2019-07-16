@@ -135,7 +135,7 @@ console.log(x, b);
 foo = function ({prop: x}) {
   console.log(x);
 };
-pa
+
 
 // Object Expression is possible
 let testObj = {
