@@ -188,7 +188,7 @@ export class ParserService {
    *
    * @param expression The expression has to contractually conform to the form
    * target = value where target can be of type any Expression or a deconstructed
-   * expression and the value can be any expression, notation and als another
+   * expression and the value can be any expression, notation and also another
    * assignment expression. It can also be a function scope or anonymous function scope
    * @param parent The parent scope
    */
@@ -196,12 +196,10 @@ export class ParserService {
     const equalsSymbolPosition = this.getFirstSymbolPosition(expression, Symbol.EQUAL);
 
     const targetExpression = expression.substring(0, equalsSymbolPosition).trim();
-    console.log('targetExpr', targetExpression);
-    const target: AssignmentExpressionTargetType = this.fromExpression(expression, parent);
-    console.log('target', target);
+    const target: AssignmentExpressionTargetType = this.fromExpression(targetExpression, parent);
 
     const valueExpression = expression.substring(equalsSymbolPosition + 1).trim();
-    const value: AssignmentExpressionValueType = this.fromNotationOrExpressionOrAssignmentExpression(expression, parent);
+    const value: AssignmentExpressionValueType = this.fromNotationOrExpressionOrAssignmentExpression(valueExpression, parent);
 
     return new AssignmentExpression(parent, target, value);
   }

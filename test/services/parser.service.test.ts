@@ -228,16 +228,23 @@ describe('Function Invocation Expression parser should parse correctly', () => {
     });
   });
 
+
   describe('Assignment Expression Parser Tests', () => {
     it('should correctly parse simple variable assignments', () => {
       const result = parser.fromAssignmentExpression('  variable = 10  ', globalScope);
       expect(result.code()).to.equal('variable = 10');
-    })
+    });
+
+    // todo multiple assignment expressions
+    // todo DAE --> array
+    // todo DAE --> complex FIE
+    // todo DOE --> Object notation
+    // todo DOE --> FIE having array index and properties
   });
 
 
-  // FromExpression Method
-  describe('Expression Parser should correctly parse al Expression types', () => {
+
+  describe('Expression Method Parser Tests', () => {
     it('should correctly parse a variable expression', () => {
       const result = parser.fromExpression(' test   ', globalScope);
       expect(result.target).to.equal('test');

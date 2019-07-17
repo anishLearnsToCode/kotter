@@ -12,6 +12,9 @@ const parser = ParserService.getService();
 // let result = parser.fromAssignmentExpression('test = tst', globalScope);
 // console.log(result);
 
-const result = parser.fromExpression('array[getNum()].attr.atr[0][10][10]', globalScope);
+// const result = parser.fromExpression('array[getNum()].attr.atr[0][10][10]', globalScope);
+// console.log(result);
+// console.log(result.code());
+
+const result = parser.fromAssignmentExpression('a = 10', globalScope);
 console.log(result);
-console.log(result.code());
