@@ -5,10 +5,12 @@ import { FunctionInvocationExpression } from "./function-invocation.expression";
 import { Notation } from "../notation/notation.construct";
 import { ArrayIndexExpression } from "./array-index.expression";
 import { Codeable } from "../../codeable";
+import { AnyNotation } from "../notation/any-notation.type";
+import { AnyExpression } from "./any-expression.type";
+import { AssignmentExpression } from "../instantiation-expressions/assignment-expression";
 
 // also add support for assignment expression and ArrayIndexExpression
-declare type GroupExpressionTargetType = Notation<any>| Scope | FunctionInvocationExpression |
-  VariableExpression | GroupExpression | ArrayIndexExpression;
+export declare type GroupExpressionTargetType = AnyNotation | AnyExpression | Scope | AssignmentExpression ;
 
 export class GroupExpression extends Expression<GroupExpressionTargetType> implements Codeable {
   constructor(parentScope: Scope, target: GroupExpressionTargetType, attribute: VariableExpression | FunctionInvocationExpression | null) {
