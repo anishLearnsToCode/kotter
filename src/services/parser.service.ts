@@ -5,7 +5,7 @@ import {Scope} from "../models/parser/scope/scope.construct";
 import {Bracket} from "../models/parser/bracket.enum";
 import {GroupExpression, GroupExpressionTargetType} from "../models/parser/expression/group.expression";
 import {AnyExpression} from "../models/parser/expression/any-expression.type";
-import {PassableArgumentsType} from "../models/parser/passable-arguments.type";
+import {Parameter} from "../models/parser/parameter";
 import {AnyNotation} from "../models/parser/notation/any-notation.type";
 import {
   AssignmentExpression,
@@ -15,6 +15,12 @@ import {
 import {Symbol} from "../models/parser/symbol.enum";
 import {ArrayIndexExpression} from "../models/parser/expression/array-index.expression";
 import {AnySymbol} from "../models/parser/symbol.type";
+import {NewStatement} from "../models/parser/statement/new.statement";
+import {ObjectAttributeValue, ObjectNotation} from "../models/parser/notation/object.notation";
+import {Pair} from "../models/common/Pair";
+import {FunctionScope} from "../models/parser/scope/function.scope";
+import {AnonymousFunctionScope} from "../models/parser/scope/anonymous-function.scope";
+import {ReservedKeywords} from "../models/reserved-keywords.enum";
 
 export class ParserService {
   private static serviceInstance = new ParserService();
@@ -204,6 +210,12 @@ export class ParserService {
     return new AssignmentExpression(parent, target, value);
   }
 
+  public fromNewStatement(expression: string, parent: Scope): NewStatement {
+    const valueExpression = expression.trim().substring(3).trim();
+    const value = this.fromExpression(valueExpression, parent);
+    return new NewStatement(parent, value);
+  }
+
   private getFirstSymbolPosition(expression: string, symbol: AnySymbol): number {
     let index = 0;
     for (let stringLiteralChar = null ; index < expression.length ; index++) {
@@ -265,6 +277,110 @@ export class ParserService {
   }
 
 
+  public fromObjectNotation(expression: string, parent: Scope): ObjectNotation {
+    expression = expression.trim().substring(1, expression.length - 2).trim();
+    console.log(expression);
+    const keyValuePairs = this.getParsedMethodArguments(expression);
+    console.log(keyValuePairs);
+
+    for (const pair of keyValuePairs) {
+
+    }
+
+    return new ObjectNotation(parent, new Map(), null);
+  }
+
+  private getObjectKeyValuePairFrom(pair: string, parent: Scope): Pair<string, ObjectAttributeValue> {
+    const semiColonPosition = this.getFirstSymbolPosition(pair, Delimiter.COLON);
+    const key = pair.substring(0, semiColonPosition).trim();
+    const valueExpression = pair.substring(semiColonPosition + 1).trim();
+    const value = this.fromExpressionOrNotationOrFunctionScope(valueExpression, parent);
+
+    return new Pair(key, value);
+  }
+
+  private fromExpressionOrNotationOrFunctionScope(expression: string, parent: Scope): ObjectAttributeValue {
+    if (this.isAnyFunctionScope(expression)) {
+      return this.fromAnyFunctionScope(expression, parent);
+    }
+
+    return this.fromExpressionOrNotation(expression, parent);
+  }
+
+  private isAnyFunctionScope(expression: string): boolean {
+    return this.isFunctionScope(expression) || this.isAnonymousFunctionScope(expression);
+  }
+
+  private isFunctionScope(expresson: string): boolean {
+    return this.getFirstTokenName(expresson.trim()) === ReservedKeywords.FUNCTION;
+  }
+
+  private isAnonymousFunctionScope(expression: string): boolean {
+    return this.indexOfPatternInUnNested(expression, '=>') >= 0;
+  }
+
+  private indexOfPatternInUnNested(expression: string, pattern: string): number {
+    for (let index = 0, bracketStack = 0, stringLiteral = null ; index < expression.length ; index++) {
+      const character = expression.charAt(index);
+      if (stringLiteral && stringLiteral === character) {
+        stringLiteral = null;
+        continue;
+      }
+
+      if (stringLiteral) {
+        continue;
+      }
+
+      if (this.isLeftBracket(character)) {
+        bracketStack++;
+      }
+
+      if (this.isRightBracket(character)) {
+        bracketStack--;
+      }
+
+      if (bracketStack === 0 && character === pattern.charAt(0)) {
+        if(pattern === expression.substr(index, pattern.length)) {
+          return index;
+        }
+      }
+    }
+
+    return -1;
+  }
+
+  private fromAnyFunctionScope(expression: string, parent: Scope): FunctionScope | AnonymousFunctionScope {
+    if (this.isFunctionScope(expression)) {
+      return this.fromFunctionScope(expression, parent);
+    }
+
+    return this.fromAnonymousFunctionScope(expression, parent);
+  }
+
+  private fromFunctionScope(expression: string, parent: Scope): FunctionScope {
+    expression = expression.trim();
+    const leftCurlyBraceIndex = this.getFirstSymbolPosition(expression, Bracket.LEFT_BRACE);
+    const rightCurlyBraceIndex = this.getPartnerBracePosition(expression, leftCurlyBraceIndex);
+
+    const scopeExpression = expression.substring(leftCurlyBraceIndex + 1, rightCurlyBraceIndex);
+    const scope = this.fromScope(scopeExpression, parent);
+
+    const attributeExpression = expression.substring(rightCurlyBraceIndex + 2);
+    const attribute = this.fromFunctionInvocationOrVariableExpression(attributeExpression, parent);
+
+    const argsExpression = expression.substring(ReservedKeywords.FUNCTION.length + 1, leftCurlyBraceIndex);
+    const args =
+  }
+
+  private fromAnonymousFunctionScope(expression: string, parent: Scope): AnonymousFunctionScope {
+
+  }
+
+  private fromScope(expression: String, parent: Scope): Scope {
+
+  }
+
+
 
   /***
    * @param expression The expression passed into this method is can
@@ -282,7 +398,7 @@ export class ParserService {
     const leftBracketPosition = this.getFirstSymbolPosition(expression, Bracket.LEFT_BRACE);
     const rightBracketPosition = this.getPartnerBracePosition(expression, leftBracketPosition);
     const argsExpression = expression.substring(leftBracketPosition + 1, rightBracketPosition);
-    const args = this.getMethodArguments(argsExpression, parent);
+    const args = this.getMethodParameters(argsExpression, parent);
 
     const attributeExpression = expression.substr(rightBracketPosition + 2);
     const attribute = attributeExpression === '' ?
@@ -290,10 +406,10 @@ export class ParserService {
     return new FunctionInvocationExpression(parent, target, attribute, args);
   }
 
-  private getArgumentsFromFunctionInvocation(expression: string, parent: Scope, leftBracketPosition: number): Array<PassableArgumentsType> {
+  private getArgumentsFromFunctionInvocation(expression: string, parent: Scope, leftBracketPosition: number): Array<Parameter> {
     const rightBracketPosition = this.partnerBracePosition(expression, leftBracketPosition);
     const argsExpression = expression.substring(leftBracketPosition, rightBracketPosition);
-    return this.getMethodArguments(argsExpression, parent);
+    return this.getMethodParameters(argsExpression, parent);
   }
 
 
@@ -415,9 +531,9 @@ export class ParserService {
    * They can be Expressions (VE | FIE | GE | AIE), Notations
    * @param parent The parent scope of the FunctionInvocation
    */
-  public getMethodArguments(code: string, parent: Scope): Array<PassableArgumentsType> {
+  public getMethodParameters(code: string, parent: Scope): Array<Parameter> {
     const args = this.getParsedMethodArguments(code);
-    let expressions: Array<PassableArgumentsType> = [];
+    let expressions: Array<Parameter> = [];
     for (let expression of args) {
       expressions.push(this.fromExpressionOrNotation(expression, parent));
     }

@@ -16,5 +16,16 @@ const parser = ParserService.getService();
 // console.log(result);
 // console.log(result.code());
 
-const result = parser.fromAssignmentExpression('a = 10', globalScope);
+// const result = parser.fromNewStatement('new Person(10, 20)[0].attr[10]', globalScope);
+// console.log(result);
+// console.log(result.code());
+
+const object = `{
+  fistName : 'anish',
+  lastName: 'sachdeva',
+  greet: function () {
+    console.log('hey there' + this.fistName);
+  }
+}`;
+const result = parser.fromObjectNotation(object, globalScope);
 console.log(result);

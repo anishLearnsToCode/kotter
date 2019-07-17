@@ -186,4 +186,4 @@ try {
   console.log('i am in the finally block ');
 }
 
-let elem = getArray()[  0];
+let elem = new Person('test')[0].attribute;

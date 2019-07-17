@@ -3,13 +3,13 @@ import {Scope} from "../scope/scope.construct";
 import {VariableExpression} from "./variable.expression";
 import {Codeable} from "../../codeable";
 import {ParserService} from "../../../services/parser.service";
-import { PassableArgumentsType } from "../passable-arguments.type";
+import { Parameter } from "../parameter";
 
 export class FunctionInvocationExpression extends Expression<string> implements Codeable {
-  args: Array<PassableArgumentsType> = [];
+  args: Array<Parameter> = [];
 
   constructor(parent: Scope, target: string, value: FunctionInvocationExpression | VariableExpression | null,
-              args: Array<PassableArgumentsType>) {
+              args: Array<Parameter>) {
     super(parent, target, value);
     this.args = args;
   }

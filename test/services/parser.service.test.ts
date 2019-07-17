@@ -303,4 +303,9 @@ describe('Function Invocation Expression parser should parse correctly', () => {
     // todo AE DAE
     // todo AE DOE
   });
+
+  describe('New Statement Parser Tests', () => {
+    // todo new with FIE
+    // todo new with AIE
+  });
 });

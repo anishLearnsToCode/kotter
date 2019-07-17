@@ -1,6 +1,7 @@
 export enum Delimiter {
   PERIOD = '.',
   SEMI_COLON = ';',
+  COLON = ':',
   COMMA = ',',
   SINGLE_QUOTE = '\'',
   DOUBLE_QUOTE = '"',
