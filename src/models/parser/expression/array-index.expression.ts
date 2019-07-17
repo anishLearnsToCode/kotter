@@ -1,16 +1,17 @@
-import { Expression } from "./expression.construct";
-import { FunctionInvocationExpression } from "./function-invocation.expression";
-import { VariableExpression } from "./variable.expression";
-import { GroupExpression } from "./group.expression";
+import {Expression, ExpressionAttribute} from "./expression.construct";
 import { Codeable } from "../../codeable";
 import { AnyExpression } from "./any-expression.type";
 import { Scope } from "../scope/scope.construct";
+import {ObjectNotation} from "../notation/object.notation";
 
-export class ArrayIndexExpression extends Expression<AnyExpression> implements Codeable {
+
+export declare type ArrayIndexExpressionTargeType = AnyExpression | ObjectNotation;
+
+export class ArrayIndexExpression extends Expression<ArrayIndexExpressionTargeType> implements Codeable {
   public readonly index: number | AnyExpression ;
 
-  constructor(parentScope: Scope, target: AnyExpression,
-              attribute: VariableExpression | FunctionInvocationExpression | null, index: number | AnyExpression) {
+  constructor(parentScope: Scope, target: ArrayIndexExpressionTargeType, attribute: ExpressionAttribute,
+              index: number | AnyExpression) {
     super(parentScope, target, attribute);
     this.index = index;
   }

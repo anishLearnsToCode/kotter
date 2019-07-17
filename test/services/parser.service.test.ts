@@ -7,6 +7,31 @@ import {VariableExpression} from "../../src/models/parser/expression/variable.ex
 const parser = ParserService.getService();
 const globalScope = Scope.getGlobalScope();
 
+const objectSample = `{
+  firstName: 'anish',
+  lastName: 'sachdeva',
+  organization: 'CERN',
+  func: () => {
+    console.log('anonymous like crazy');
+  },
+  greet: function (val) {
+    console.log('hey there fella');
+  }
+}`;
+
+const anonymousFunctionSample = `() => {
+  [, a, b, [t, g]] = getArray().args;
+  ({
+    prop: x,
+    prop2: {
+      prop2: {
+        nested: [ , , b]
+      }
+    }
+  } = { prop: "Hello", prop2: { prop2: { nested: ["a", "b", "c"]}}});
+  let name = 'john doe';
+}`;
+
 describe ('VariableExpressionParser', () => {
   it('should parse test correctly', () => {
     const result = parser.fromVariableExpression(' test   ', globalScope);
@@ -248,9 +273,19 @@ describe('Function Invocation Expression parser should parse correctly', () => {
       expect(result.code()).to.equal('()');
     });
 
-    it('should parse a group expression with Variable Expression assignment', () => {
+    it('should parse a group expression with Variable Expression', () => {
       const result = parser.fromExpression(' ( person.firstName.value )   ', globalScope);
       expect(result.code()).to.equal('(person.firstName.value)');
     });
+
+    it('should parse a group expression with Function Invocation Expression', () => {
+      const result = parser.fromExpression(' ( person.firstName.toString().args(42, "test") )   ', globalScope);
+      expect(result.code()).to.equal('person.firstName.toString().args(42,"test"))');
+    });
+
+    // todo FIE aonymous func
+    // todo FIE deconstruced args in func
+    // todo object notation and array notation passed as args in function
+    // todo array index expression
   });
 });

@@ -127,6 +127,7 @@ console.log(x, y);
 console.log(x, b);
 // => Hello c
 
+let funny = {firstName: 'anish'}[0];
 
 // === Combining all to make fun happen
 
