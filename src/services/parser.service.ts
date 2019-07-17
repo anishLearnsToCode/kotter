@@ -3,7 +3,6 @@ import {FunctionInvocationExpression} from "../models/parser/expression/function
 import {VariableExpression} from "../models/parser/expression/variable.expression";
 import {Scope} from "../models/parser/scope/scope.construct";
 import {Bracket} from "../models/parser/bracket.enum";
-import {start} from "repl";
 
 export class ParserService {
   private static serviceInstance = new ParserService();
@@ -39,6 +38,10 @@ export class ParserService {
 
   private CARRIAGE_RETURN: string = '\n';
   private WHITE_SPACE: string = ' ';
+
+  public getAttributeOf(code: string): string | null {
+
+  }
 
   public codeSnippetContainsAttribute(code: string): boolean {
     return this.containsPeriodDelimiterAfterFirstWord(code);
