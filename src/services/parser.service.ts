@@ -139,10 +139,12 @@ export class ParserService {
    * @param parent The parent Scope of the construct
    */
   public fromGroupExpression(expression: string, parent: Scope): GroupExpression {
+    expression = expression.trim();
     const rightBracketPosition = this.getPartnerBracePosition(expression, 0);
-    const codeInsideBrackets = expression.substring(1, rightBracketPosition);
-    const attributeExpression = expression.substr(rightBracketPosition + 2);
-    const attribute = this.fromFunctionInvocationOrVariableExpression(attributeExpression, parent);
+    const codeInsideBrackets = expression.substring(1, rightBracketPosition).trim();
+    const attributeExpression = expression.substr(rightBracketPosition + 2).trim();
+    const attribute = attributeExpression === '' ?
+      null : this.fromFunctionInvocationOrVariableExpression(attributeExpression, parent);
 
     return new GroupExpression(
       parent,
@@ -276,7 +278,7 @@ export class ParserService {
     expression = expression.trim();
     const target = this.getFirstTokenName(expression);
 
-    const leftBracketPosition = target.length;
+    const leftBracketPosition = this.getFirstSymbolPosition(expression, Bracket.LEFT_BRACE);
     const rightBracketPosition = this.getPartnerBracePosition(expression, leftBracketPosition);
     const argsExpression = expression.substring(leftBracketPosition + 1, rightBracketPosition);
     const args = this.getMethodArguments(argsExpression, parent);
@@ -434,7 +436,12 @@ export class ParserService {
    * either a valid Expression (VE | FIE | GE | AIE) or any Notation (N)
    */
   private getParsedMethodArguments(expression: string): Array<string> {
+    expression = expression.trim();
     const args: Array<string> = [];
+    if (expression === '') {
+      return args;
+    }
+
     let bracketStack = 0, startIndex = 0;
     for (let index = 0 ; index < expression.length ; index++) {
       const character = expression.charAt(index);
