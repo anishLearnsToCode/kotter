@@ -3,12 +3,13 @@ import {Scope} from "../scope/scope.construct";
 import {VariableExpression} from "./variable.expression";
 import {Codeable} from "../../codeable";
 import {ParserService} from "../../../services/parser.service";
+import { PassableArgumentsType } from "../passable-arguments.type";
 
 export class FunctionInvocationExpression extends Expression<string> implements Codeable {
-  args: Array<VariableExpression> = []; // DE to be added later
+  args: Array<PassableArgumentsType> = [];
 
   constructor(parent: Scope, target: string, value: FunctionInvocationExpression | VariableExpression | null,
-              args: Array<VariableExpression>) {
+              args: Array<PassableArgumentsType>) {
     super(parent, target, value);
     this.args = args;
   }
@@ -24,13 +25,5 @@ export class FunctionInvocationExpression extends Expression<string> implements 
       args += ',' + construct.code();
     }
     return args.substring(1);
-  }
-
-  public static parseFromForParent(code: string, parent: Scope): FunctionInvocationExpression {
-    const parser = ParserService.getService();
-    const target = parser.getFirstTokenName(code);
-    const args = parser.getMethodArguments(code, parent);
-
-    return new FunctionInvocationExpression(parent, target, parser.getAttributeConstructFor(code, parent), args);
   }
 }

@@ -13,10 +13,4 @@ export class VariableExpression extends Expression<string> implements Codeable {
   public code(): string {
     return this.target + (this.attribute !== null ? '.' + this.attribute.code() : '' );
   }
-
-  public static parseFromForParent(code: string, parent: Scope): VariableExpression {
-    const parser = ParserService.getService();
-    const attribute = parser.getAttributeConstructFor(code, parent);
-    return new VariableExpression(parent, parser.getFirstTokenName(code), attribute);
-  }
 }

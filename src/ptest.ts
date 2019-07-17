@@ -29,3 +29,12 @@ console.log(variable.code());
 
 variable = parser.fromVariableExpression('anish.father.son.age', globalScope);
 console.log(variable.code());
+
+
+// FIE test
+console.log('\n\n\n\n');
+variable = parser.fromFunctionInvocationExpression('foo(bar, bar2(bar, bar))', globalScope);
+console.log(variable.code());
+
+variable = parser.fromFunctionInvocationExpression('foo(bar, bar2(bar, bar)).test', globalScope);
+console.log(variable.code());

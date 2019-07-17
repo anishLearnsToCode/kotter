@@ -6,6 +6,9 @@ import { Bracket} from "../models/parser/bracket.enum";
 import { Expression } from "../models/parser/expression/expression.construct";
 import { GroupExpression } from "../models/parser/expression/group.expression";
 import { AnyExpression } from "../models/parser/expression/any-expression.type";
+import { PassableArgumentsType } from "../models/parser/passable-arguments.type";
+import { Notation } from "../models/parser/notation/notation.construct";
+import { AnyNotation } from "../models/parser/notation/any-notation.type";
 
 export class ParserService {
   private static serviceInstance = new ParserService();
@@ -77,18 +80,14 @@ export class ParserService {
    */
   public fromVariableExpression(expression: string, parent: Scope): VariableExpression {
     const target = this.getFirstTokenName(expression);
-    let attribute = null;
     const attributeExpression = this.getFirstAttribute(expression);
-    if(attributeExpression) {
-      if (this.attributeIsAFunctionInvocation(attributeExpression)) {
-        attribute = this.fromFunctionInvocationExpression(attributeExpression, parent);
-      } else { // The attribute is a VariableExpression (VE)
-        attribute = this.fromVariableExpression(attributeExpression, parent);
-      }
-    }
+    const attribute = attributeExpression ?
+      this.fromFunctionInvocationOrVariableExpression(attributeExpression, parent) : null;
 
     return new VariableExpression(parent, target, attribute);
   }
+
+
 
   /***
    * @param expression The expression passed into this method is can
@@ -104,59 +103,69 @@ export class ParserService {
 
     const leftBracketPosition = target.length + 1;
     const rightBracketPosition = this.partnerBracePosition(expression, leftBracketPosition);
-    const argsExpression = expression.substring(leftBracketPosition + 1, rightBracketPosition);
+    const argsExpression = expression.substring(leftBracketPosition, rightBracketPosition);
     const args = this.getMethodArguments(argsExpression, parent);
 
-    const attributeExpression = expression.substr(rightBracketPosition + 1);
-    const attribute = this.getAttributeConstructFor(expression, parent);
+    const attributeExpression = expression.substr(rightBracketPosition + 2);
+    const attribute = attributeExpression === '' ?
+      null : this.fromFunctionInvocationOrVariableExpression(attributeExpression, parent);
     return new FunctionInvocationExpression(parent, target, attribute, args);
   }
 
+  private getArgumentsFromFunctionInvocation(expression: string, parent: Scope, leftBracketPosition: number): Array<PassableArgumentsType> {
+    const rightBracketPosition = this.partnerBracePosition(expression, leftBracketPosition);
+    const argsExpression = expression.substring(leftBracketPosition, rightBracketPosition);
+    return this.getMethodArguments(argsExpression, parent);
+  }
+
+
+
   /***
-   *
-   * @param attributeExpression The attribute attached to the end of either a FunctionInvocationExpression
-   * or a normal VariableExpression. This attribute can also be present after
-   * other constructs to access the properties or methods of those constructs.
+   * @param attributeExpression The attribute attached to the end of either a
+   * FunctionInvocationExpression or a normal VariableExpression. This attribute
+   * can also be present after other constructs to access the properties or methods
+   * of those constructs.
    * Attribute can be present after Notation and Expression constructs
    * @param parent
    */
-  private fromEitherFunctionInvocationOrVariableExpression(attributeExpression: string, parent: Scope): FunctionInvocationExpression | VariableExpression {
-    let attribute;
-    if(attributeExpression) {
-      if (this.attributeIsAFunctionInvocation(attributeExpression)) {
-        return this.fromFunctionInvocationExpression(attributeExpression, parent);
-      } else { // The attribute is a VariableExpression (VE)
-        return this.fromVariableExpression(attributeExpression, parent);
-      }
+  private fromFunctionInvocationOrVariableExpression(attributeExpression: string, parent: Scope):
+    FunctionInvocationExpression | VariableExpression {
+    if (this.attributeIsAFunctionInvocation(attributeExpression)) {
+      return this.fromFunctionInvocationExpression(attributeExpression, parent);
     }
-  }
 
-  private partnerBracePosition(expression: string, leftBracePosition: number): number {
-
+    return this.fromVariableExpression(attributeExpression, parent);
   }
 
   /***
-   *
-   * @param expression The code expression recieved is contractually obliged to be
+   * Returns the corresponding bracket in a code sequence for any given left
+   * indentation bracket a point
+   * @param expression The code expression which much contractually be a valid code
+   * snippet and also must have the left brace at the given index
+   * @param leftBracePosition The index where one of the left brackets is present
    */
-  private getMethodArgumentsExpression(expression: string): string {
+  private partnerBracePosition(expression: string, leftBracePosition: number): number {
+    let bracketStack = 0;
+    for(let index = 0 ; index < expression.length ; index++) {
+      const character = expression.charAt(index);
+      if (this.LEFT_BRACKETS.has(character)) {
+        bracketStack++;
+      }
 
+      if (this.RIGHT_BRACKETS.has(character)) {
+        bracketStack--;
+      }
+
+      if(this.RIGHT_BRACKETS.has(character) && bracketStack === 0) {
+        return index;
+      }
+    }
+
+    return -1;
   }
 
   public codeSnippetContainsAttribute(code: string): boolean {
     return this.containsPeriodDelimiterAfterFirstWord(code);
-  }
-
-  public getAttributeConstructFor(code: string, parent: Scope): FunctionInvocationExpression | VariableExpression | null {
-    const attribute = this.getFirstAttribute(code);
-    if (attribute) {
-      if (this.attributeIsAFunctionInvocation(attribute)) {
-        return FunctionInvocationExpression.parseFromForParent(attribute, parent);
-      }
-      return VariableExpression.parseFromForParent(attribute, parent)
-    }
-
-    return null;
   }
 
   private getFirstAttribute(code: string): string | null {
@@ -168,10 +177,10 @@ export class ParserService {
     return null;
   }
 
-  public getFirstTokenName(code: string): string {
+  private getFirstTokenName(code: string): string {
     let token = '';
     for (let character of code) {
-      if (this.isADelimiter(character) || this.isBracket(character) || this.isWhitespaceCharacter(character)) {
+      if (this.isDelimiter(character) || this.isBracket(character) || this.isWhitespaceCharacter(character)) {
         break;
       }
       token += character;
@@ -192,7 +201,7 @@ export class ParserService {
   private getOtherCharacterPositionAfterFirstWord(code: string): number {
     for (let index = 0 ; index < code.length ; index++) {
       let character = code.charAt(index);
-      if(this.isADelimiter(character) || this.isBracket(character)) {
+      if(this.isDelimiter(character) || this.isBracket(character)) {
         return index;
       }
     }
@@ -212,7 +221,7 @@ export class ParserService {
         bracketStack--;
       }
 
-      if(bracketStack === 0 && this.isADelimiter(character)) {
+      if(bracketStack === 0 && this.isDelimiter(character)) {
         return index;
       }
     }
@@ -220,18 +229,27 @@ export class ParserService {
     return -1;
   }
 
-  public getMethodArguments(code: string, parent: Scope): Array<VariableExpression> {
-    const leftBracePosition = this.getOtherCharacterPositionAfterFirstWord(code);
-    const rightBracePosition = this.getPartnerBracePosition(code, leftBracePosition);
-    const args = this.getParsedMethodArguments(code.substring(leftBracePosition + 1, rightBracePosition));
-    // console.log(args);
-
-    let expressions: Array<VariableExpression> = [];
+  /***
+   * @param code the code snippet passed along must obey the valid syntactic
+   * contract and also be of the form argument1, arg2 ... where the args string is
+   * <b>not</b> enclosed by parentheses. The arguments although represented by
+   * strings here have to be valid parameters that can be passed in js methods.
+   * They can be Expressions (VE | FIE | GE | AIE), Notations
+   * @param parent The parent scope of the FunctionInvocation
+   */
+  public getMethodArguments(code: string, parent: Scope): Array<PassableArgumentsType> {
+    const args = this.getParsedMethodArguments(code);
+    let expressions: Array<PassableArgumentsType> = [];
     for (let expression of args) {
-      expressions.push(VariableExpression.parseFromForParent(expression, parent));
+      expressions.push(this.fromExpressionOrNotation(expression, parent));
     }
 
     return expressions;
+  }
+
+  // TODO: Add functionality for all expressions and notations
+  private fromExpressionOrNotation(expression: string, parent: Scope): AnyExpression | AnyNotation {
+    return this.fromFunctionInvocationOrVariableExpression(expression, parent);
   }
 
   /***
@@ -295,7 +313,7 @@ export class ParserService {
     return this.brackets.has(character);
   }
 
-  private isADelimiter(character: string): boolean {
+  private isDelimiter(character: string): boolean {
     return Delimiter.PERIOD === character || Delimiter.SEMI_COLON === character;
   }
 
