@@ -110,17 +110,18 @@ export class ParserService {
   }
 
   private fromArrayIndexExpression(expression: string, parent: Scope): ArrayIndexExpression {
-    const leftSquareBracePosition = this.getFirstSymbolPosition(expression, Bracket.LEFT_SQUARED);
-    const rightSquareBracePosition = this.getLastSymbolPosition(expression, Bracket.RIGHT_SQUARED);
+    const leftSquareBracePosition = this.getLastSymbolPosition(expression, Bracket.LEFT_SQUARED);
+    const rightSquareBracePosition = this.getPartnerBracePosition(expression, leftSquareBracePosition);
 
     const targetExpression = expression.substring(0, leftSquareBracePosition);
     const target: AnyExpression = this.fromExpression(targetExpression, parent);
 
     const indexExpression = expression.substring(leftSquareBracePosition + 1, rightSquareBracePosition);
-    const index = Number(indexExpression) ? this.fromExpression(indexExpression, parent) : Number(indexExpression);
+    const index = isNaN(+indexExpression) ? this.fromExpression(indexExpression, parent) : Number(indexExpression) ;
 
-    const attributeExpression = expression.substring(rightSquareBracePosition + 1);
-    const attribute = this.fromFunctionInvocationOrVariableExpression(attributeExpression, parent);
+    const attributeExpression = expression.substring(rightSquareBracePosition + 2);
+    const attribute = attributeExpression === '' ?
+      null : this.fromFunctionInvocationOrVariableExpression(attributeExpression, parent);
 
     return new ArrayIndexExpression(parent, target, attribute, index);
   }

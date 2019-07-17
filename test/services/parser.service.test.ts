@@ -235,6 +235,8 @@ describe('Function Invocation Expression parser should parse correctly', () => {
     })
   });
 
+
+  // FromExpression Method
   describe('Expression Parser should correctly parse al Expression types', () => {
     it('should correctly parse a variable expression', () => {
       const result = parser.fromExpression(' test   ', globalScope);
@@ -280,12 +282,18 @@ describe('Function Invocation Expression parser should parse correctly', () => {
 
     it('should parse a group expression with Function Invocation Expression', () => {
       const result = parser.fromExpression(' ( person.firstName.toString().args(42, "test") )   ', globalScope);
-      expect(result.code()).to.equal('person.firstName.toString().args(42,"test"))');
+      expect(result.code()).to.equal('(person.firstName.toString().args(42,"test")))');
     });
 
-    // todo FIE aonymous func
+    // todo FIE anonymous func
     // todo FIE deconstruced args in func
     // todo object notation and array notation passed as args in function
     // todo array index expression
+    // todo array index expressions with multiple indexs [0][1] etc.
+    // todo array index expressions with multiple indexs and passing different expressions in them
+    // todo object notation expression with anonymous functions and normal function declarations + VE + FIE
+    // todo AE - normal
+    // todo AE DAE
+    // todo AE DOE
   });
 });
