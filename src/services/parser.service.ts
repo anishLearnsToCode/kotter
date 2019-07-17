@@ -23,7 +23,7 @@ export class ParserService {
     return this.serviceInstance;
   }
 
-  private readonly brackets: Set<String> = new Set<String>([
+  private readonly BRACKETS: Set<String> = new Set<String>([
     Bracket.LEFT_CURLY_BRACE,
     Bracket.LEFT_BRACE,
     Bracket.LEFT_ANGLE,
@@ -191,11 +191,13 @@ export class ParserService {
    * assignment expression. It can also be a function scope or anonymous function scope
    * @param parent The parent scope
    */
-  private fromAssignmentExpression(expression: string, parent: Scope): AssignmentExpression {
+  public fromAssignmentExpression(expression: string, parent: Scope): AssignmentExpression {
     const equalsSymbolPosition = this.getFirstSymbolPosition(expression, Symbol.EQUAL);
 
     const targetExpression = expression.substring(0, equalsSymbolPosition).trim();
+    console.log('targetExpr', targetExpression);
     const target: AssignmentExpressionTargetType = this.fromExpression(expression, parent);
+    console.log('target', target);
 
     const valueExpression = expression.substring(equalsSymbolPosition + 1).trim();
     const value: AssignmentExpressionValueType = this.fromNotationOrExpressionOrAssignmentExpression(expression, parent);
@@ -319,7 +321,7 @@ export class ParserService {
    * indentation bracket a point
    * @param expression The code expression which much contractually be a valid code
    * snippet and also must have the left brace at the given index
-   * @param leftBracePosition The index where one of the left brackets is present
+   * @param leftBracePosition The index where one of the left BRACKETS is present
    */
   private partnerBracePosition(expression: string, leftBracePosition: number): number {
     let bracketStack = 0;
@@ -509,7 +511,7 @@ export class ParserService {
   }
 
   private isBracket(character: string): boolean {
-    return this.brackets.has(character);
+    return this.BRACKETS.has(character);
   }
 
   private isDelimiter(character: string): boolean {

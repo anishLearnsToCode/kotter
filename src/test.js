@@ -185,3 +185,5 @@ try {
 } finally {
   console.log('i am in the finally block ');
 }
+
+let elem = getArray()[  0];

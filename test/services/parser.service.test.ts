@@ -141,5 +141,116 @@ describe('Function Invocation Expression parser should parse correctly', () => {
       const result = parser.fromGroupExpression(' ( variable.mother.age   ) ', globalScope);
       expect(result.code()).to.equal('(variable.mother.age)');
     });
+
+    it('should correctly parse function invocation expressions', () => {
+      const result = parser.fromGroupExpression(' ( variable.father.getAge()   ) ', globalScope);
+      expect(result.code()).to.equal('(variable.father.getAge())');
+    });
+
+    it('should correctly parse complex function invocation expressions', () => {
+      const result = parser.fromGroupExpression(' ( variable.father().getAge().toString(10, 20, {}, \'test\'))   ', globalScope);
+      expect(result.code()).to.equal('variable.father().getAge().toString(10, 20, {}, \'test\'))');
+    });
+
+    it('should correctly parse multiple group expressions', () => {
+      const result = parser.fromGroupExpression('  (((test)))  ', globalScope);
+      expect(result.code()).to.equal('(((test)))');
+    });
+
+    it('should correctly parse complex multiple group expressions', () => {
+      const result = parser.fromGroupExpression('  (((foo(bar, bar(), 10, "test"))))  ', globalScope);
+      expect(result.code()).to.equal('(((foo(bar,bar(),10,"test"))))');
+    });
+
+    it('should correctly parse Array Index Expressions', () => {
+      const result = parser.fromGroupExpression(' ( array[0 ]  )   ', globalScope);
+      expect(result.code()).to.equal('(array[0])');
+    });
+
+    it('should correctly parse assignment expressions', () => {
+      const result = parser.fromGroupExpression(' ( variable = getArray()[0] )  ', globalScope);
+      expect(result.code()).to.equal('(variable=getArray()[0])');
+    });
+
+    it('should correctly parse deconstructed array assignment expressions', () => {
+      const result = parser.fromGroupExpression(' ( [a]= getArray()[0] )  ', globalScope);
+      expect(result.code()).to.equal('([a]=getArray()[0])');
+    });
+
+    it('should correctly parse complex deconstructed array assignment expressions', () => {
+      const result = parser.fromGroupExpression(' ( [, a, b, ,[, , d] , c]= getArray().args )  ', globalScope);
+      expect(result.code()).to.equal('( [,a,b,,[,,d],c]=getArray().args)');
+    });
+
+    it('should correctly parse deconstructed object assignment expressions', () => {
+      const result = parser.fromGroupExpression(' ( {firstName, lastName, y: x} = getObj().parameters[0] )  ', globalScope);
+      expect(result.code()).to.equal('{firstName,lastName,y:x}=getObj().parameters[0])');
+    });
+
+    it('should correctly parse deep deconstructed object assignment expressions', () => {
+      const objectDeconstructedExpression = `
+        ({
+          prop: x,
+          prop2: {
+            prop2: {
+              nested: [ , , b]
+            }
+          }
+        } = { prop: "Hello", prop2: { prop2: { nested: ["a", "b", "c"]}}})
+      `;
+      const result = parser.fromGroupExpression(objectDeconstructedExpression, globalScope);
+      expect(result.code()).to.equal(objectDeconstructedExpression.trim());
+    });
+  });
+
+  describe('Assignment Expression Parser Tests', () => {
+    it('should correctly parse simple variable assignments', () => {
+      const result = parser.fromAssignmentExpression('  variable = 10  ', globalScope);
+      expect(result.code()).to.equal('variable = 10');
+    })
+  });
+
+  describe('Expression Parser should correctly parse al Expression types', () => {
+    it('should correctly parse a variable expression', () => {
+      const result = parser.fromExpression(' test   ', globalScope);
+      expect(result.target).to.equal('test');
+      expect(result.code()).to.equal('test');
+    });
+
+    it('should parse a complex variable expression', () => {
+      const result = parser.fromExpression(' test.anish.firstName.value  ', globalScope);
+      expect(result.target).to.equal('test');
+      expect(result.code()).to.equal('test.anish.firstName.value');
+    });
+
+    it('should parse a function invocation expression', () => {
+      const result = parser.fromExpression(' getArray().args ', globalScope);
+      expect(result.target).to.equal('getArray');
+      expect(result.code()).to.equal('getArray().args');
+    });
+
+    it('should parse a complex function invocation expression', () => {
+      const result = parser.fromExpression(' getArray(bar, bar(), 42, "test", \'test\').args ', globalScope);
+      expect(result.target).to.equal('getArray');
+      expect(result.code()).to.equal('getArray(bar,bar(),42,"test",\'test\').args');
+    });
+
+    it('should parse a complex variable/function invocation expression', () => {
+      const expression = `getArray(bar, bar(), 42, "test", 'test', {name: 'anish'}).args.run()   `;
+      const result = parser.fromExpression(expression, globalScope);
+      expect(result.target).to.equal('getArray');
+      expect(result.code()).to.equal(expression.trim());
+    });
+
+    it('should parse a group expression', () => {
+      const result = parser.fromExpression('()', globalScope);
+      expect((result.target as VariableExpression).target).to.equal('');
+      expect(result.code()).to.equal('()');
+    });
+
+    it('should parse a group expression with Variable Expression assignment', () => {
+      const result = parser.fromExpression(' ( person.firstName.value )   ', globalScope);
+      expect(result.code()).to.equal('(person.firstName.value)');
+    });
   });
 });

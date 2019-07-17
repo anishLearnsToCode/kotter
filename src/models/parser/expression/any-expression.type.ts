@@ -7,4 +7,4 @@ export declare type AnyExpression =
   FunctionInvocationExpression |
   VariableExpression |
   ArrayIndexExpression |
-  GroupExpression;
+  GroupExpression ;
