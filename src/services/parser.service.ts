@@ -1,20 +1,20 @@
-import { Delimiter } from "../models/parser/delimiter.enum";
-import { FunctionInvocationExpression } from "../models/parser/expression/function-invocation.expression";
-import { VariableExpression } from "../models/parser/expression/variable.expression";
-import { Scope } from "../models/parser/scope/scope.construct";
-import { Bracket } from "../models/parser/bracket.enum";
-import { GroupExpression, GroupExpressionTargetType } from "../models/parser/expression/group.expression";
-import { AnyExpression } from "../models/parser/expression/any-expression.type";
-import { PassableArgumentsType } from "../models/parser/passable-arguments.type";
-import { AnyNotation } from "../models/parser/notation/any-notation.type";
+import {Delimiter} from "../models/parser/delimiter.enum";
+import {FunctionInvocationExpression} from "../models/parser/expression/function-invocation.expression";
+import {VariableExpression} from "../models/parser/expression/variable.expression";
+import {Scope} from "../models/parser/scope/scope.construct";
+import {Bracket} from "../models/parser/bracket.enum";
+import {GroupExpression, GroupExpressionTargetType} from "../models/parser/expression/group.expression";
+import {AnyExpression} from "../models/parser/expression/any-expression.type";
+import {PassableArgumentsType} from "../models/parser/passable-arguments.type";
+import {AnyNotation} from "../models/parser/notation/any-notation.type";
 import {
   AssignmentExpression,
   AssignmentExpressionTargetType,
   AssignmentExpressionValueType
 } from "../models/parser/instantiation-expressions/assignment-expression";
-import { Symbol } from "../models/parser/symbol.enum";
-import { ArrayIndexExpression } from "../models/parser/expression/array-index.expression";
-import { AnySymbol } from "../models/parser/symbol.type";
+import {Symbol} from "../models/parser/symbol.enum";
+import {ArrayIndexExpression} from "../models/parser/expression/array-index.expression";
+import {AnySymbol} from "../models/parser/symbol.type";
 
 export class ParserService {
   private static serviceInstance = new ParserService();
@@ -41,6 +41,13 @@ export class ParserService {
     Bracket.LEFT_SQUARED
   ]);
 
+  private readonly RIGHT_BRACKETS: Set<String> = new Set<String>([
+    Bracket.RIGHT_ANGLE,
+    Bracket.RIGHT_BRACE,
+    Bracket.RIGHT_CURLY_BRACE,
+    Bracket.RIGHT_SQUARED
+  ]);
+
   private readonly NON_ARRAY_LEFT_BRACKETS: Set<String> = new Set<String>([
     Bracket.LEFT_CURLY_BRACE,
     Bracket.LEFT_BRACE,
@@ -50,11 +57,17 @@ export class ParserService {
   private readonly NON_ARRAY_RIGHT_BRACKETS: Set<String> = new Set<String>([
     Bracket.RIGHT_ANGLE,
     Bracket.RIGHT_BRACE,
-    Bracket.RIGHT_CURLY_BRACE,
+    Bracket.RIGHT_CURLY_BRACE
   ]);
 
-  private CARRIAGE_RETURN: string = '\n';
-  private WHITE_SPACE: string = ' ';
+  private readonly STRING_LITERAL_DELIMITERS: Set<string> = new Set<string>([
+    Delimiter.DOUBLE_QUOTE,
+    Delimiter.SINGLE_QUOTE,
+    Delimiter.BACK_TICK
+  ]);
+
+  private readonly CARRIAGE_RETURN: string = '\n';
+  private readonly WHITE_SPACE: string = ' ';
 
   /***
    * @param expression The code string to be parsed can only be a
@@ -151,11 +164,11 @@ export class ParserService {
   private isAssignmentExpression(expression: string): boolean {
     for (let index = 0, bracketStack = 0 ; index < expression.length ; index++) {
       const character = expression.charAt(index);
-      if (this.LEFT_BRACKETS.has(character)) {
+      if (this.isLeftBracket(character)) {
         bracketStack++;
       }
 
-      if (this.RIGHT_BRACKETS.has(character)) {
+      if (this.isRightBracket(character)) {
         bracketStack--;
       }
 
@@ -189,11 +202,48 @@ export class ParserService {
   }
 
   private getFirstSymbolPosition(expression: string, symbol: AnySymbol): number {
+    let index = 0;
+    for (let stringLiteralChar = null ; index < expression.length ; index++) {
+      const character = expression.charAt(index);
+      if (stringLiteralChar && character === stringLiteralChar) {
+        stringLiteralChar = null;
+      }
 
+      if (stringLiteralChar) {
+        continue;
+      }
+
+      if (!stringLiteralChar) {
+        if (character === symbol) {
+          return  index;
+        }
+      }
+    }
+
+    return -1;
   }
 
   private getLastSymbolPosition(expression: string, symbol: AnySymbol): number {
+    let index = expression.length - 1;
+    for (let stringLiteralChar = null ; index >= 0 ; index--) {
+      const character = expression.charAt(index);
 
+      if (stringLiteralChar && character === stringLiteralChar) {
+        stringLiteralChar = null;
+      }
+
+      if (stringLiteralChar) {
+        continue;
+      }
+
+      if (!stringLiteralChar) {
+        if (character === symbol) {
+          return  index;
+        }
+      }
+    }
+
+    return -1;
   }
 
   /***
@@ -202,9 +252,10 @@ export class ParserService {
    * @param parent The parent scope that contains this expression
    */
   public fromVariableExpression(expression: string, parent: Scope): VariableExpression {
+    expression = expression.trim();
     const target = this.getFirstTokenName(expression);
-    const attributeExpression = this.getFirstAttribute(expression);
-    const attribute = attributeExpression ?
+    const attributeExpression = expression.substring(target.length + 1);
+    const attribute = attributeExpression !== ''?
       this.fromFunctionInvocationOrVariableExpression(attributeExpression, parent) : null;
 
     return new VariableExpression(parent, target, attribute);
@@ -224,9 +275,9 @@ export class ParserService {
   public fromFunctionInvocationExpression(expression: string, parent: Scope): FunctionInvocationExpression {
     const target = this.getFirstTokenName(expression);
 
-    const leftBracketPosition = target.length + 1;
-    const rightBracketPosition = this.partnerBracePosition(expression, leftBracketPosition);
-    const argsExpression = expression.substring(leftBracketPosition, rightBracketPosition);
+    const leftBracketPosition = target.length;
+    const rightBracketPosition = this.getPartnerBracePosition(expression, leftBracketPosition);
+    const argsExpression = expression.substring(leftBracketPosition + 1, rightBracketPosition);
     const args = this.getMethodArguments(argsExpression, parent);
 
     const attributeExpression = expression.substr(rightBracketPosition + 2);
@@ -271,15 +322,15 @@ export class ParserService {
     let bracketStack = 0;
     for(let index = 0 ; index < expression.length ; index++) {
       const character = expression.charAt(index);
-      if (this.LEFT_BRACKETS.has(character)) {
+      if (this.isLeftBracket(character)) {
         bracketStack++;
       }
 
-      if (this.RIGHT_BRACKETS.has(character)) {
+      if (this.isRightBracket(character)) {
         bracketStack--;
       }
 
-      if(this.RIGHT_BRACKETS.has(character) && bracketStack === 0) {
+      if(this.isRightBracket(character) && bracketStack === 0) {
         return index;
       }
     }
@@ -404,24 +455,41 @@ export class ParserService {
     return args;
   }
 
-  private getPartnerBracePosition(code: string, startIndex: number) {
-    let counter = 0, index = startIndex;
-    for (; index < code.length ; index++) {
+  public getPartnerBracePosition(code: string, startIndex: number) {
+    let index = startIndex;
+    for (let bracketStack = 0, stringLiteral = null ; index < code.length ; index++) {
       const character = code.charAt(index);
-      if (this.isLeftBracket(character)) {
-        counter++
+
+      if (stringLiteral && character === stringLiteral) {
+        stringLiteral = null;
+        continue;
       }
 
-      if (this.isRightBracket(character)) {
-        counter--;
+      if (stringLiteral) {
+        continue;
       }
 
-      if(counter === 0) {
-        break;
+      if (!stringLiteral) {
+        if (this.STRING_LITERAL_DELIMITERS.has(character)) {
+          stringLiteral = character;
+          continue;
+        }
+
+        if (this.isLeftBracket(character)) {
+          bracketStack++
+        }
+
+        if (this.isRightBracket(character)) {
+          bracketStack--;
+        }
+
+        if(this.isRightBracket(character) && bracketStack === 0) {
+          return index;
+        }
       }
     }
 
-    return index;
+    return -1;
   }
 
   private isLeftBracket(character: string): boolean {
