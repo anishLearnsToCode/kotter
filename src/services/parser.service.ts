@@ -85,9 +85,6 @@ export class ParserService {
       } else { // The attribute is a VariableExpression (VE)
         attribute = this.fromVariableExpression(attributeExpression, parent);
       }
-
-      // console.log(attributeExpression);
-      // console.log(attribute);
     }
 
     return new VariableExpression(parent, target, attribute);
@@ -102,7 +99,7 @@ export class ParserService {
    * or a FunctionInvocationExpression
    * @param parent The parent scope of the FunctionInvocationExpression
    */
-  public fromFunctionInvocationExpression(expression: string, parent: Scope): FunctionInvocationExpression | null {
+  public fromFunctionInvocationExpression(expression: string, parent: Scope): FunctionInvocationExpression {
     const target = this.getFirstTokenName(expression);
 
     const leftBracketPosition = target.length + 1;
@@ -113,6 +110,25 @@ export class ParserService {
     const attributeExpression = expression.substr(rightBracketPosition + 1);
     const attribute = this.getAttributeConstructFor(expression, parent);
     return new FunctionInvocationExpression(parent, target, attribute, args);
+  }
+
+  /***
+   *
+   * @param attributeExpression The attribute attached to the end of either a FunctionInvocationExpression
+   * or a normal VariableExpression. This attribute can also be present after
+   * other constructs to access the properties or methods of those constructs.
+   * Attribute can be present after Notation and Expression constructs
+   * @param parent
+   */
+  private fromEitherFunctionInvocationOrVariableExpression(attributeExpression: string, parent: Scope): FunctionInvocationExpression | VariableExpression {
+    let attribute;
+    if(attributeExpression) {
+      if (this.attributeIsAFunctionInvocation(attributeExpression)) {
+        return this.fromFunctionInvocationExpression(attributeExpression, parent);
+      } else { // The attribute is a VariableExpression (VE)
+        return this.fromVariableExpression(attributeExpression, parent);
+      }
+    }
   }
 
   private partnerBracePosition(expression: string, leftBracePosition: number): number {
