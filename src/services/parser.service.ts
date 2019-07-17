@@ -273,6 +273,7 @@ export class ParserService {
    * @param parent The parent scope of the FunctionInvocationExpression
    */
   public fromFunctionInvocationExpression(expression: string, parent: Scope): FunctionInvocationExpression {
+    expression = expression.trim();
     const target = this.getFirstTokenName(expression);
 
     const leftBracketPosition = target.length;

@@ -27,3 +27,26 @@ describe ('VariableExpressionParser', () => {
     expect(result.code()).to.equal('anish.father.firstName');
   });
 });
+
+describe('Function Invocation Expression parser should parse correctly', () => {
+  it('should correctly parse foo()', () => {
+    const result = parser.fromFunctionInvocationExpression('foo()  ', globalScope);
+    expect(result.target).to.equal('foo');
+    expect(result.args.length).to.equal(0);
+    expect(result.code()).to.equal('foo()');
+  });
+
+  it('should correctly parse foo(bar)', () => {
+    const result = parser.fromFunctionInvocationExpression(' foo(bar)  ', globalScope);
+    expect(result.target).to.equal('foo');
+    expect(result.args.length).to.equal(1);
+    expect(result.code()).to.equal('foo(bar)');
+  });
+
+  it('should correctly parse foo()', () => {
+    const result = parser.fromFunctionInvocationExpression('foo(bar, bar2)  ', globalScope);
+    expect(result.target).to.equal('foo');
+    expect(result.args.length).to.equal(2);
+    expect(result.code()).to.equal('foo(bar,bar2)');
+  });
+});
