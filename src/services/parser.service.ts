@@ -1,10 +1,11 @@
-import {Delimiter} from "../models/parser/delimiter.enum";
-import {FunctionInvocationExpression} from "../models/parser/expression/function-invocation.expression";
-import {VariableExpression} from "../models/parser/expression/variable.expression";
-import {Scope} from "../models/parser/scope/scope.construct";
-import {Bracket} from "../models/parser/bracket.enum";
+import { Delimiter} from "../models/parser/delimiter.enum";
+import { FunctionInvocationExpression} from "../models/parser/expression/function-invocation.expression";
+import { VariableExpression} from "../models/parser/expression/variable.expression";
+import { Scope} from "../models/parser/scope/scope.construct";
+import { Bracket} from "../models/parser/bracket.enum";
 import { Expression } from "../models/parser/expression/expression.construct";
 import { GroupExpression } from "../models/parser/expression/group.expression";
+import { AnyExpression } from "../models/parser/expression/any-expression.type";
 
 export class ParserService {
   private static serviceInstance = new ParserService();
@@ -46,7 +47,7 @@ export class ParserService {
    * VE, FIE, GE or AIE
    * @param parent The parent Scope
    */
-  public fromExpression(expression: string, parent: Scope): Expression | null {
+  public fromExpression(expression: string, parent: Scope): AnyExpression | null {
     if (expression === null) {
       return null;
     }
@@ -66,7 +67,7 @@ export class ParserService {
    */
   public fromGroupExpression(expression: string, parent: Scope): GroupExpression {
     const codeInsideBrackets = expression.substring(1, expression.length-1);
-    return new GroupExpression()
+    return new GroupExpression(parent, new VariableExpression(parent, '', null), null);
   }
 
   /***
@@ -74,27 +75,56 @@ export class ParserService {
    * a variable expression and can have an attribute as either FIE or VE
    * @param parent The parent scope that contains this expression
    */
-  public fromVariableExpression(expression: string, parent: Scope): VariableExpression | null {
+  public fromVariableExpression(expression: string, parent: Scope): VariableExpression {
     const target = this.getFirstTokenName(expression);
+    let attribute = null;
     const attributeExpression = this.getFirstAttribute(expression);
     if(attributeExpression) {
-      let attribute;
       if (this.attributeIsAFunctionInvocation(attributeExpression)) {
         attribute = this.fromFunctionInvocationExpression(attributeExpression, parent);
       } else { // The attribute is a VariableExpression (VE)
         attribute = this.fromVariableExpression(attributeExpression, parent);
       }
 
-      return new VariableExpression(parent, target, attribute);
+      // console.log(attributeExpression);
+      // console.log(attribute);
     }
 
-    return null;
+    return new VariableExpression(parent, target, attribute);
   }
 
+  /***
+   * @param expression The expression passed into this method is can
+   * contractually obliged to only be a FunctionInvocationExpression
+   * as so foo(), foo(bar, person), foo({age: 10, name: john}). It can also
+   * contain an attribute like foo(args).firstName or foo(args).func(arg2)
+   * The attribute is contractually obliged to be either a VariableExpression
+   * or a FunctionInvocationExpression
+   * @param parent The parent scope of the FunctionInvocationExpression
+   */
   public fromFunctionInvocationExpression(expression: string, parent: Scope): FunctionInvocationExpression | null {
     const target = this.getFirstTokenName(expression);
-    const args = this.getMethodArguments(expression, parent);
-    return new FunctionInvocationExpression(parent, target, this.getAttributeConstructFor(expression, parent), args);
+
+    const leftBracketPosition = target.length + 1;
+    const rightBracketPosition = this.partnerBracePosition(expression, leftBracketPosition);
+    const argsExpression = expression.substring(leftBracketPosition + 1, rightBracketPosition);
+    const args = this.getMethodArguments(argsExpression, parent);
+
+    const attributeExpression = expression.substr(rightBracketPosition + 1);
+    const attribute = this.getAttributeConstructFor(expression, parent);
+    return new FunctionInvocationExpression(parent, target, attribute, args);
+  }
+
+  private partnerBracePosition(expression: string, leftBracePosition: number): number {
+
+  }
+
+  /***
+   *
+   * @param expression The code expression recieved is contractually obliged to be
+   */
+  private getMethodArgumentsExpression(expression: string): string {
+
   }
 
   public codeSnippetContainsAttribute(code: string): boolean {
@@ -188,11 +218,17 @@ export class ParserService {
     return expressions;
   }
 
-  private getParsedMethodArguments(code: string): Array<string> {
+  /***
+   * @param expression The code expression received is contractually obliged to be
+   * a comma separated list of arguments that can be syntactically passed into a
+   * method as parameters. The arguments will be returned as strings bit will represent
+   * either a valid Expression (VE | FIE | GE | AIE) or any Notation (N)
+   */
+  private getParsedMethodArguments(expression: string): Array<string> {
     const args: Array<string> = [];
     let bracketStack = 0, startIndex = 0;
-    for (let index = 0 ; index < code.length ; index++) {
-      const character = code.charAt(index);
+    for (let index = 0 ; index < expression.length ; index++) {
+      const character = expression.charAt(index);
       if (this.isLeftBracket(character)) {
         bracketStack++;
       }
@@ -202,12 +238,12 @@ export class ParserService {
       }
 
       if(bracketStack === 0 && character === Delimiter.COMMA) {
-        args.push(code.substring(startIndex, index).trim());
+        args.push(expression.substring(startIndex, index).trim());
         startIndex = index + 1;
       }
     }
 
-    args.push(code.substring(startIndex, code.length).trim());
+    args.push(expression.substring(startIndex, expression.length).trim());
     return args;
   }
 
