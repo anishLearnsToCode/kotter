@@ -3,6 +3,8 @@ import {FunctionInvocationExpression} from "../models/parser/expression/function
 import {VariableExpression} from "../models/parser/expression/variable.expression";
 import {Scope} from "../models/parser/scope/scope.construct";
 import {Bracket} from "../models/parser/bracket.enum";
+import { Expression } from "../models/parser/expression/expression.construct";
+import { GroupExpression } from "../models/parser/expression/group.expression";
 
 export class ParserService {
   private static serviceInstance = new ParserService();
@@ -39,8 +41,60 @@ export class ParserService {
   private CARRIAGE_RETURN: string = '\n';
   private WHITE_SPACE: string = ' ';
 
-  public getAttributeOf(code: string): string | null {
+  /***
+   * @param expression The code string to be parsed can only be a
+   * VE, FIE, GE or AIE
+   * @param parent The parent Scope
+   */
+  public fromExpression(expression: string, parent: Scope): Expression | null {
+    if (expression === null) {
+      return null;
+    }
 
+    // Expression is a group expression (GE)
+    if (expression.charAt(0) === Bracket.LEFT_BRACE) {
+      return this.fromGroupExpression(expression, parent);
+    }
+
+    return null;
+  }
+
+  /***
+   * @param expression is present inside code in a () bracket style and must be
+   * either an Expression (VE, FIE, GE or AIE) or Notation or Assignment Expression (AE)
+   * @param parent The parent Scope of the construct
+   */
+  public fromGroupExpression(expression: string, parent: Scope): GroupExpression {
+    const codeInsideBrackets = expression.substring(1, expression.length-1);
+    return new GroupExpression()
+  }
+
+  /***
+   * @param expression The code expression to parse which contractually must be
+   * a variable expression and can have an attribute as either FIE or VE
+   * @param parent The parent scope that contains this expression
+   */
+  public fromVariableExpression(expression: string, parent: Scope): VariableExpression | null {
+    const target = this.getFirstTokenName(expression);
+    const attributeExpression = this.getFirstAttribute(expression);
+    if(attributeExpression) {
+      let attribute;
+      if (this.attributeIsAFunctionInvocation(attributeExpression)) {
+        attribute = this.fromFunctionInvocationExpression(attributeExpression, parent);
+      } else { // The attribute is a VariableExpression (VE)
+        attribute = this.fromVariableExpression(attributeExpression, parent);
+      }
+
+      return new VariableExpression(parent, target, attribute);
+    }
+
+    return null;
+  }
+
+  public fromFunctionInvocationExpression(expression: string, parent: Scope): FunctionInvocationExpression | null {
+    const target = this.getFirstTokenName(expression);
+    const args = this.getMethodArguments(expression, parent);
+    return new FunctionInvocationExpression(parent, target, this.getAttributeConstructFor(expression, parent), args);
   }
 
   public codeSnippetContainsAttribute(code: string): boolean {

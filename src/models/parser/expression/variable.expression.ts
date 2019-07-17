@@ -4,9 +4,9 @@ import {FunctionInvocationExpression} from "./function-invocation.expression";
 import {Codeable} from "../../codeable";
 import {ParserService} from "../../../services/parser.service";
 
-export class VariableExpression extends Expression implements Codeable {
+export class VariableExpression extends Expression<string> implements Codeable {
 
-  private constructor(parent: Scope, target: string, attribute: FunctionInvocationExpression | VariableExpression | null) {
+  constructor(parent: Scope, target: string, attribute: FunctionInvocationExpression | VariableExpression | null) {
     super(parent, target, attribute);
   }
 

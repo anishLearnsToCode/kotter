@@ -127,12 +127,12 @@ if (anish instanceof Person) {
   console.log('anish is human !!');
 }
 
-// classes example and inheritance sample
+// super + extends keyword
 class SuperHero extends Person {
-  constructor(canFly, canShootLasers) {
+  constructor(hasLaserEyes, canFly) {
     super(anish);
+    this.hasLaserEyes = hasLaserEyes;
     this.canFly = canFly;
-    this.canShootLasers = canShootLasers;
   }
 }
 

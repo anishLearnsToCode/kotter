@@ -4,7 +4,7 @@ import {VariableExpression} from "./variable.expression";
 import {Codeable} from "../../codeable";
 import {ParserService} from "../../../services/parser.service";
 
-export class FunctionInvocationExpression extends Expression implements Codeable {
+export class FunctionInvocationExpression extends Expression<string> implements Codeable {
   args: Array<VariableExpression> = []; // DE to be added later
 
   constructor(parent: Scope, target: string, value: FunctionInvocationExpression | VariableExpression | null,

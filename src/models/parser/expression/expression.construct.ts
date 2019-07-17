@@ -3,11 +3,11 @@ import {Scope} from "../scope/scope.construct";
 import {VariableExpression} from "./variable.expression";
 import {FunctionInvocationExpression} from "./function-invocation.expression";
 
-export class Expression extends Construct {
-  public target: string;
-  public attribute: VariableExpression | FunctionInvocationExpression | null;
+export class Expression<T> extends Construct {
+  public target: T;
+  public attribute: FunctionInvocationExpression | VariableExpression | null;
 
-  constructor(parentScope: Scope, target: string, attribute: VariableExpression | FunctionInvocationExpression | null) {
+  constructor(parentScope: Scope, target: T, attribute: FunctionInvocationExpression | VariableExpression | null) {
     super(parentScope);
     this.target = target;
     this.attribute = attribute;

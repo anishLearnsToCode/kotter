@@ -1,6 +1,7 @@
 import {Construct} from "../construct";
+import { Codeable } from "../../codeable";
 
-export class Scope extends Construct {
+export class Scope extends Construct implements Codeable {
   private constructs: Array<Construct> = [];
 
   public static getGlobalScope() {
@@ -9,5 +10,9 @@ export class Scope extends Construct {
 
   public constructor(parentScope: Scope | null) {
     super(parentScope);
+  }
+
+  code(): string {
+    return "";
   }
 }
