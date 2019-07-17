@@ -398,7 +398,7 @@ export class ParserService {
     const leftBracketPosition = this.getFirstSymbolPosition(expression, Bracket.LEFT_BRACE);
     const rightBracketPosition = this.getPartnerBracePosition(expression, leftBracketPosition);
     const argsExpression = expression.substring(leftBracketPosition + 1, rightBracketPosition);
-    const args = this.getMethodParameters(argsExpression, parent);
+    const args = this.getMethodArguments(argsExpression, parent);
 
     const attributeExpression = expression.substr(rightBracketPosition + 2);
     const attribute = attributeExpression === '' ?
@@ -409,7 +409,7 @@ export class ParserService {
   private getArgumentsFromFunctionInvocation(expression: string, parent: Scope, leftBracketPosition: number): Array<Parameter> {
     const rightBracketPosition = this.partnerBracePosition(expression, leftBracketPosition);
     const argsExpression = expression.substring(leftBracketPosition, rightBracketPosition);
-    return this.getMethodParameters(argsExpression, parent);
+    return this.getMethodArguments(argsExpression, parent);
   }
 
 
@@ -531,7 +531,7 @@ export class ParserService {
    * They can be Expressions (VE | FIE | GE | AIE), Notations
    * @param parent The parent scope of the FunctionInvocation
    */
-  public getMethodParameters(code: string, parent: Scope): Array<Parameter> {
+  public getMethodArguments(code: string, parent: Scope): Array<Parameter> {
     const args = this.getParsedMethodArguments(code);
     let expressions: Array<Parameter> = [];
     for (let expression of args) {
