@@ -5,26 +5,32 @@ import {Codeable} from "../../codeable";
 import {ParserService} from "../../../services/parser.service";
 
 export class FunctionInvocationExpression extends Expression implements Codeable {
-  arguments: Array<VariableExpression> = []; // DE to be added later
+  args: Array<VariableExpression> = []; // DE to be added later
 
-  constructor(parent: Scope, target: string, value: FunctionInvocationExpression | VariableExpression | null) {
+  constructor(parent: Scope, target: string, value: FunctionInvocationExpression | VariableExpression | null,
+              args: Array<VariableExpression>) {
     super(parent, target, value);
+    this.args = args;
   }
 
   code(): string {
-    return 'i am func()';
+    return this.target + '(' + this.representationOfArgs() + ')' +
+      (this.attribute === null ? '' : '.' + this.attribute.code());
+  }
+
+  private representationOfArgs(): string {
+    let args = '';
+    for (const construct of this.args) {
+      args += ',' + construct.code();
+    }
+    return args.substring(1);
   }
 
   public static parseFromForParent(code: string, parent: Scope): FunctionInvocationExpression {
     const parser = ParserService.getService();
-    code = code.trim();
+    const target = parser.getFirstTokenName(code);
+    const args = parser.getMethodArguments(code, parent);
 
-    if (parser.codeSnippetContainsAttribute(code)) {
-      console.log(code);
-    }
-
-    const attribute = parser.getAttributeConstructFor(code, parent);
-
-    return new FunctionInvocationExpression(parent, code.trim(), null);
+    return new FunctionInvocationExpression(parent, target, parser.getAttributeConstructFor(code, parent), args);
   }
 }

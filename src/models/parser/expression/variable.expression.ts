@@ -2,7 +2,6 @@ import {Expression} from "./expression.construct";
 import {Scope} from "../scope/scope.construct";
 import {FunctionInvocationExpression} from "./function-invocation.expression";
 import {Codeable} from "../../codeable";
-import {CreatableFromString} from "../creatable-from-string";
 import {ParserService} from "../../../services/parser.service";
 
 export class VariableExpression extends Expression implements Codeable {
