@@ -7,7 +7,6 @@ export enum ReservedKeywords {
   CASE = 'case',
   DEFAULT = 'default',
 
-  FINALLY = 'finally',
   TRY = 'try',
   CATCH = 'catch',
   THROW = 'throw',

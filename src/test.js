@@ -57,6 +57,12 @@ function getObject() {
   }
 }
 
+let regXp = /ab+c/i;
+
+let hex = `\u00`;
+
+hex = anish . firstName;
+
 {
   {
     let {right} = getObject();
@@ -65,12 +71,35 @@ function getObject() {
 }
 
 class Person {
+  firstName;
+
+  static logData() {
+    console.log(this.prototype.firstName);
+  }
+
   constructor({firstName, lastName, age}) {
     this.firstName = firstName || 'gautam';
     this.lastName = lastName || '';
     this.age = age;
   }
 }
+
+(function() {
+  var x = 20;
+  var y = 20;
+  var answer = x + y;
+  console.log(answer);
+});
+
+(function() {
+  var x = 20;
+  var y = 20;
+  var answer = x + y;
+  console.log(answer);
+})();
+
+person =-2;
+
 
 let anish = new Person({
   firstName: 'anish',

@@ -41,7 +41,7 @@ describe ('VariableExpressionParser', () => {
   });
 
   it('should parse anish.firstName correctly', () => {
-    const result = parser.fromVariableExpression('  test.firstName  ', globalScope);
+    const result = parser.fromVariableExpression('  test .  firstName  ', globalScope);
     expect(result.target).to.equal('test');
     expect(result.code()).to.equal('test.firstName');
   });
@@ -57,6 +57,9 @@ describe ('VariableExpressionParser', () => {
     expect(result.target).to.equal('anish');
     expect(result.code()).to.equal('anish.getAge()');
   });
+
+  // todo func()()
+  // todo un named function function(x, y) {}
 });
 
 

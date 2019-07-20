@@ -5,6 +5,7 @@ import {Codeable} from "../../codeable";
 import {ParserService} from "../../../services/parser.service";
 import { Parameter } from "../parameter";
 
+// todo FIE can target string | FIE
 export class FunctionInvocationExpression extends Expression<string> implements Codeable {
   args: Array<Parameter> = [];
 
