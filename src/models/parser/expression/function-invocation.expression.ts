@@ -1,22 +1,26 @@
-import {Expression} from "./expression.construct";
+import {Expression, ExpressionAttribute} from "./expression.construct";
 import {Scope} from "../scope/scope.construct";
-import {VariableExpression} from "./variable.expression";
 import {Codeable} from "../../codeable";
-import {ParserService} from "../../../services/parser.service";
-import { Parameter } from "../parameter";
+import { FunctionArgument } from "../functionArgument";
+import {AnyExpression} from "./any-expression.type";
+import {FunctionScope} from "../scope/function.scope";
 
-// todo FIE can target string | FIE
-export class FunctionInvocationExpression extends Expression<string> implements Codeable {
-  args: Array<Parameter> = [];
+// todo FIE can target expression (VE | FIE | GE | AIE) and also FS (both AFS and FDS)
+export declare type FunctionInvocationExpressionTarget = AnyExpression | FunctionScope;
 
-  constructor(parent: Scope, target: string, value: FunctionInvocationExpression | VariableExpression | null,
-              args: Array<Parameter>) {
+
+export class FunctionInvocationExpression extends Expression<FunctionInvocationExpressionTarget> implements Codeable {
+  args: Array<FunctionArgument> = [];
+
+  constructor(parent: Scope, target: FunctionInvocationExpressionTarget, value: ExpressionAttribute,
+              args: Array<FunctionArgument>) {
     super(parent, target, value);
     this.args = args;
   }
 
   code(): string {
-    return this.target + '(' + this.representationOfArgs() + ')' +
+    return this.target.code() + ' '
+      + '(' + this.representationOfArgs() + ')' +
       (this.attribute === null ? '' : '.' + this.attribute.code());
   }
 
@@ -25,6 +29,7 @@ export class FunctionInvocationExpression extends Expression<string> implements 
     for (const construct of this.args) {
       args += ',' + construct.code();
     }
+
     return args.substring(1);
   }
 }

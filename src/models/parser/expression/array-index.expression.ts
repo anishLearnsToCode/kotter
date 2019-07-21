@@ -3,15 +3,19 @@ import { Codeable } from "../../codeable";
 import { AnyExpression } from "./any-expression.type";
 import { Scope } from "../scope/scope.construct";
 import {ObjectNotation} from "../notation/object.notation";
+import {Statement} from "../statement/statement.construct";
+import {NumberNotation} from "../notation/number.notation";
+import {StringNotation} from "../notation/string.notation";
 
 
-export declare type ArrayIndexExpressionTargeType = AnyExpression | ObjectNotation;
+export declare type ArrayIndexExpressionTargetType = AnyExpression | ObjectNotation;
+export declare type ArrayIndex = NumberNotation | StringNotation | AnyExpression | Statement ;
 
-export class ArrayIndexExpression extends Expression<ArrayIndexExpressionTargeType> implements Codeable {
-  public readonly index: number | AnyExpression ;
+export class ArrayIndexExpression extends Expression<ArrayIndexExpressionTargetType> implements Codeable {
+  public readonly index: ArrayIndex;
 
-  constructor(parentScope: Scope, target: ArrayIndexExpressionTargeType, attribute: ExpressionAttribute,
-              index: number | AnyExpression) {
+  constructor(parentScope: Scope, target: ArrayIndexExpressionTargetType, attribute: ExpressionAttribute,
+              index: ArrayIndex) {
     super(parentScope, target, attribute);
     this.index = index;
   }
@@ -22,8 +26,6 @@ export class ArrayIndexExpression extends Expression<ArrayIndexExpressionTargeTy
   }
 
   private getIndexCode(): string {
-    return this.index === null ? '' :
-      typeof this.index === 'number' ?
-        this.index.toString() : this.index.code();
+    return this.index.code();
   }
 }

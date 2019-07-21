@@ -5,5 +5,6 @@ export enum Delimiter {
   COMMA = ',',
   SINGLE_QUOTE = '\'',
   DOUBLE_QUOTE = '"',
-  BACK_TICK = '`'
+  BACK_TICK = '`',
+  WHITE_SPACE = ' '
 }

@@ -5,20 +5,20 @@ import {Scope} from "../models/parser/scope/scope.construct";
 import {Bracket} from "../models/parser/bracket.enum";
 import {GroupExpression, GroupExpressionTargetType} from "../models/parser/expression/group.expression";
 import {AnyExpression} from "../models/parser/expression/any-expression.type";
-import {Parameter} from "../models/parser/parameter";
+import {FunctionArgument} from "../models/parser/functionArgument";
 import {AnyNotation} from "../models/parser/notation/any-notation.type";
 import {
   AssignmentExpression,
   AssignmentExpressionTargetType,
   AssignmentExpressionValueType
-} from "../models/parser/instantiation-expressions/assignment-expression";
+} from "../models/parser/instantiation/assignment-expression";
 import {Symbol} from "../models/parser/symbol.enum";
 import {ArrayIndexExpression} from "../models/parser/expression/array-index.expression";
 import {AnySymbol} from "../models/parser/symbol.type";
 import {NewStatement} from "../models/parser/statement/new.statement";
 import {ObjectAttributeValue, ObjectNotation} from "../models/parser/notation/object.notation";
 import {Pair} from "../models/common/Pair";
-import {FunctionScope} from "../models/parser/scope/function.scope";
+import {FunctionDecelerationScope} from "../models/parser/scope/function-deceleration-scope";
 import {AnonymousFunctionScope} from "../models/parser/scope/anonymous-function.scope";
 import {ReservedKeywords} from "../models/reserved-keywords.enum";
 
@@ -349,7 +349,7 @@ export class ParserService {
     return -1;
   }
 
-  private fromAnyFunctionScope(expression: string, parent: Scope): FunctionScope | AnonymousFunctionScope {
+  private fromAnyFunctionScope(expression: string, parent: Scope): FunctionDecelerationScope | AnonymousFunctionScope {
     if (this.isFunctionScope(expression)) {
       return this.fromFunctionScope(expression, parent);
     }
@@ -357,7 +357,7 @@ export class ParserService {
     return this.fromAnonymousFunctionScope(expression, parent);
   }
 
-  private fromFunctionScope(expression: string, parent: Scope): FunctionScope {
+  private fromFunctionScope(expression: string, parent: Scope): FunctionDecelerationScope {
     expression = expression.trim();
     const leftCurlyBraceIndex = this.getFirstSymbolPosition(expression, Bracket.LEFT_BRACE);
     const rightCurlyBraceIndex = this.getPartnerBracePosition(expression, leftCurlyBraceIndex);
@@ -406,7 +406,7 @@ export class ParserService {
     return new FunctionInvocationExpression(parent, target, attribute, args);
   }
 
-  private getArgumentsFromFunctionInvocation(expression: string, parent: Scope, leftBracketPosition: number): Array<Parameter> {
+  private getArgumentsFromFunctionInvocation(expression: string, parent: Scope, leftBracketPosition: number): Array<FunctionArgument> {
     const rightBracketPosition = this.partnerBracePosition(expression, leftBracketPosition);
     const argsExpression = expression.substring(leftBracketPosition, rightBracketPosition);
     return this.getMethodArguments(argsExpression, parent);
@@ -531,9 +531,9 @@ export class ParserService {
    * They can be Expressions (VE | FIE | GE | AIE), Notations
    * @param parent The parent scope of the FunctionInvocation
    */
-  public getMethodArguments(code: string, parent: Scope): Array<Parameter> {
+  public getMethodArguments(code: string, parent: Scope): Array<FunctionArgument> {
     const args = this.getParsedMethodArguments(code);
-    let expressions: Array<Parameter> = [];
+    let expressions: Array<FunctionArgument> = [];
     for (let expression of args) {
       expressions.push(this.fromExpressionOrNotation(expression, parent));
     }
@@ -641,5 +641,9 @@ export class ParserService {
     }
 
     return false;
+  }
+
+  public isOperator(token: string): boolean {
+
   }
 }

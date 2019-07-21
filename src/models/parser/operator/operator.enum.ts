@@ -63,5 +63,7 @@ export enum Operator {
   BITWISE_OR_ASSIGNMENT = '|=',
   BITWISE_XOR_ASSIGNMENT = '^=',
 
-  COMMA = ','
+  COMMA = ',',
+
+  LAMBDA = '=>'
 }

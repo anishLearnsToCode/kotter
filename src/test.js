@@ -59,10 +59,6 @@ function getObject() {
 
 let regXp = /ab+c/i;
 
-let hex = `\u00`;
-
-hex = anish . firstName;
-
 {
   {
     let {right} = getObject();
@@ -71,8 +67,6 @@ hex = anish . firstName;
 }
 
 class Person {
-  firstName;
-
   static logData() {
     console.log(this.prototype.firstName);
   }
@@ -84,12 +78,20 @@ class Person {
   }
 }
 
-(function() {
+(() => {
   var x = 20;
-  var y = 20;
-  var answer = x + y;
+  let y = 20;
+  const answer = x + y;
   console.log(answer);
-});
+})();
+
+console.log('heyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy');
+let value = new Map();
+value.set(1, 'test');
+value.set(2, 'blabla');
+for (const entry of value.entries()) {
+  console.log(entry);
+}
 
 (function() {
   var x = 20;
@@ -200,19 +202,5 @@ try {
 }
 
 // complex try-catch-finally block
-try {
-  myroutine(); // may throw three types of exceptions
-} catch (e if e instanceof TypeError) {
-  // statements to handle TypeError exceptions
-} catch (e if e instanceof RangeError) {
-  // statements to handle RangeError exceptions
-} catch (e if e instanceof EvalError) {
-  // statements to handle EvalError exceptions
-} catch (e) {
-  // statements to handle any unspecified exceptions
-  // pass exception object to error handler
-} finally {
-  console.log('i am in the finally block ');
-}
 
 let elem = new Person('test')[0].attribute;

@@ -25,5 +25,6 @@ export enum ReservedKeywords {
   DO_WHILE = 'do',
 
   FUNCTION = 'function',
+  GENERATOR_FUNCTION = 'function*',
   RETURN = 'return'
 }

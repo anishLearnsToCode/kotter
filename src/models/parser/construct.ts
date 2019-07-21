@@ -1,10 +1,11 @@
 import {Scope} from "./scope/scope.construct";
 import {Codeable} from "../codeable";
 
-export class Construct {
-  private readonly parentScope: Scope | null;
+export abstract class Construct implements Codeable {
+  parentScope: Scope | null | undefined;
+  abstract code(): string ;
 
-  constructor(parentScope: Scope | null) {
-    this.parentScope = parentScope;
+  protected constructor(parent: Scope) {
+    this.parentScope = parent;
   }
 }

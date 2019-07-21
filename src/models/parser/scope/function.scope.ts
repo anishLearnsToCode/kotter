@@ -1,29 +1,20 @@
 import {Scope} from "./scope.construct";
-import {Codeable} from "../../codeable";
 import {VariableExpression} from "../expression/variable.expression";
-import {AssignmentExpression} from "../instantiation-expressions/assignment-expression";
-import {ReservedKeywords} from "../../reserved-keywords.enum";
+import {AssignmentExpression} from "../instantiation/assignment-expression";
+import {Construct} from "../construct";
 
-// todo add DE
+// todo add deconstructed expression
 export declare type FunctionParameter = VariableExpression | AssignmentExpression;
 
-export class FunctionScope extends Scope implements Codeable {
-  private readonly name: string;
-  private parameters: Array<FunctionParameter>;
+export abstract class FunctionScope extends Scope {
+  readonly parameters: Array<FunctionParameter>;
 
-  constructor(parent: Scope, name: string, parameters: Array<FunctionParameter>) {
-    super(parent);
-    this.name = name;
+  constructor(parent: Scope, body: Array<Construct>, parameters: Array<FunctionParameter>) {
+    super(parent, body);
     this.parameters = parameters;
   }
 
-  public code(): string {
-    return ReservedKeywords.FUNCTION + ' (' + this.representationOfParameters() + ') {' +
-      super.code()
-    + ' }';
-  }
-
-  private representationOfParameters(): string {
+  representationOfParameters(): string {
     let args = '';
     for (const parameter of this.parameters) {
       args += ',' + parameter.code();
