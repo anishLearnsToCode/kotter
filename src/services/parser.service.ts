@@ -30,6 +30,9 @@ import {NumberNotation} from "../models/parser/notation/number.notation";
 import {Statement} from "../models/parser/statement/statement.construct";
 import {Operator} from "../models/parser/operator/operator.enum";
 import {OperatorExpression} from "../models/parser/operator/operator.expression";
+import {FunctionScope} from "../models/parser/scope/function.scope";
+import {ArrayElement, ArrayNotation} from "../models/parser/notation/array-notation";
+import {BooleanNotation} from "../models/parser/notation/boolean.notation";
 
 export class ParserService {
   private static serviceInstance = new ParserService();
@@ -129,6 +132,8 @@ export class ParserService {
     Operator.SPREAD
   ]);
 
+  private readonly BOOLEAN_VALUES = new Set<string>(['true', 'false']);
+
   private readonly DIGITS: Set<number> = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 0]);
 
   private readonly CARRIAGE_RETURN: string = '\n';
@@ -146,13 +151,13 @@ export class ParserService {
    */
   public fromExpression(expression: string, parent: Scope): AnyExpression {
     // if has attribute
-    const periodAttributeDelimiterIndex = this.getFirstSymbolPosition(expression, Delimiter.PERIOD);
+    const periodAttributeDelimiterIndex = this.getFirstSymbolPositionAtTopLevel(expression, Delimiter.PERIOD);
 
     if (periodAttributeDelimiterIndex !== -1) {
       const targetExpression = expression.substring(0, periodAttributeDelimiterIndex);
       const attributeExpression = expression.substring(periodAttributeDelimiterIndex + 1);
       const target = this.fromExpression(targetExpression, parent);
-      target.attribute = this.fromFunctionInvocationOrVariableExpression(attributeExpression, parent);
+      target.attribute = this.fromExpressionAttribute(attributeExpression, parent);
       return target;
     }
 
@@ -190,7 +195,7 @@ export class ParserService {
   private fromArrayIndexExpression(expression: string, parent: Scope): ArrayIndexExpression {
     const periodDelimiterPosition = this.getFirstSymbolPositionAtTopLevel(expression, Delimiter.PERIOD);
 
-    const leftSquareBracePosition = this.getLastSymbolPositionBefore(expression, Bracket.LEFT_SQUARED, periodDelimiterPosition);
+    const leftSquareBracePosition = this.getLastSymbolPositionAtTopLevel(expression.substring(0, periodDelimiterPosition), Bracket.LEFT_SQUARED);
     const rightSquareBracePosition = this.getPartnerBracePosition(expression, leftSquareBracePosition);
 
     const targetExpression = expression.substring(0, leftSquareBracePosition).trim();
@@ -245,7 +250,7 @@ export class ParserService {
 
     const operators: Array<string> = this.getOperators(tokens);
     if (operators.length === 1 && operators[0] === Operator.EQUALITY) {
-      return this.fromAssignmentTokens(tokens, parent);
+      return this.fromAssignmentExpressionTokens(tokens, parent);
     }
 
     const resultTokens: Array<AnyExpression | AnyNotation | OperatorExpression> = [];
@@ -372,7 +377,7 @@ export class ParserService {
   private fromNumberNotation(expression: string, parent: Scope): NumberNotation {
     const lastDigitIndex = this.getLastDigitIndexInNumber(expression);
     const attributeExpression = expression.substring(lastDigitIndex + 2).trim();
-    const attribute = attributeExpression === null ?
+    const attribute = attributeExpression === '' ?
       null : this.fromExpressionAttribute(attributeExpression, parent);
     const number = +expression.substring(0, lastDigitIndex + 1).trim();
 
@@ -413,26 +418,29 @@ export class ParserService {
     const partnerDelimiterIndex = this.getPartnerLiteral(expression, 0);
 
     const attributeExpression = expression.substring(partnerDelimiterIndex + 2).trim();
-    const attribute = attributeExpression === null ?
+    const attribute = attributeExpression === '' ?
       null : this.fromExpressionAttribute(attributeExpression, parent);
 
-    return new StringNotation(parent, expression.substring(1, expression.length-1), attribute, delimiter);
+    return new StringNotation(parent, expression.substring(1, partnerDelimiterIndex), attribute, delimiter);
   }
 
   private isGroupExpression(expression: string): boolean {
-    return expression.charAt(expression.length - 1) === Bracket.RIGHT_BRACE;
+    const periodDelimiterIndex = this.getFirstSymbolPositionAtTopLevel(expression, Delimiter.PERIOD);
+    if (periodDelimiterIndex === -1) {
+      return expression.charAt(expression.length - 1) === Bracket.RIGHT_BRACE &&
+        expression.charAt(0) === Bracket.LEFT_BRACE ;
+    }
+
+    return this.isGroupExpression(expression.substring(0, periodDelimiterIndex).trim());
   }
 
   private isArrayIndexExpression(expression: string): boolean {
-    return expression.charAt(expression.length - 1) === Bracket.RIGHT_SQUARED ;
-  }
-
-  private fromExpressionOrAssignmentExpression(expression: string, parent: Scope): AnyExpression | AssignmentExpression {
-    if (this.isAssignmentExpression(expression)) {
-      return this.fromAssignmentExpression(expression, parent);
+    const periodDelimiterIndex = this.getFirstSymbolPositionAtTopLevel(expression, Delimiter.PERIOD);
+    if (periodDelimiterIndex === -1) {
+      return expression.charAt(expression.length - 1) === Bracket.RIGHT_SQUARED ;
     }
 
-    return this.fromExpression(expression, parent);
+    return this.isArrayIndexExpression(expression.substring(0, periodDelimiterIndex).trim());
   }
 
   /***
@@ -484,7 +492,6 @@ export class ParserService {
     return false;
   }
 
-  // TODO: Implement Assignment Expression parser
   /***
    *
    * @param expression The expression has to contractually conform to the form
@@ -493,129 +500,145 @@ export class ParserService {
    * assignment expression. It can also be a function scope or anonymous function scope
    * @param parent The parent scope
    */
-  public fromAssignmentExpression(expression: string, parent: Scope): AssignmentExpression {
-    const equalsSymbolPosition = this.getFirstSymbolPosition(expression, Symbol.EQUAL);
+  // public fromAssignmentExpression(expression: string, parent: Scope): AssignmentExpression {
+  //   const equalsSymbolPosition = this.getFirstSymbolPositionAtTopLevel(expression, Symbol.EQUAL);
+  //
+  //   const targetExpression = expression.substring(0, equalsSymbolPosition).trim();
+  //   const target: AssignmentExpressionTargetType = this.fromExpression(targetExpression, parent);
+  //
+  //   const valueExpression = expression.substring(equalsSymbolPosition + 1).trim();
+  //   const value: AssignmentExpressionValueType = this.fromNotationOrExpressionOrAssignmentExpression(valueExpression, parent);
+  //
+  //   return new AssignmentExpression(parent, target, value);
+  // }
 
-    const targetExpression = expression.substring(0, equalsSymbolPosition).trim();
-    const target: AssignmentExpressionTargetType = this.fromExpression(targetExpression, parent);
+  /***
+   *
+   * @param tokens The string tokens received here must eb exactly 3 in number one target expression,
+   * one EQUALS delimiter operator token (or some other assignment type operator) and one value expression
+   * @param parent The parent scope of the expression
+   */
+  public fromAssignmentExpressionTokens(tokens: Array<string>, parent: Scope): AssignmentExpression {
 
-    const valueExpression = expression.substring(equalsSymbolPosition + 1).trim();
-    const value: AssignmentExpressionValueType = this.fromNotationOrExpressionOrAssignmentExpression(valueExpression, parent);
-
-    return new AssignmentExpression(parent, target, value);
-  }
-
-  public fromAssignmentTokens(tokens: Array<string>, parent: Scope): AssignmentExpression {
-
-  }
-
-  public fromNewStatement(expression: string, parent: Scope): NewStatement {
-    const valueExpression = expression.trim().substring(3).trim();
-    const value = this.fromExpression(valueExpression, parent);
-    return new NewStatement(parent, value);
   }
 
   private getFirstSymbolPositionAtTopLevel(expression: string, symbol: AnySymbol): number {
-    for (let bracketStack = 0, insideString = false, index = 0 ; index < expression.length ; index++) {
+    for (let bracketStack = 0, stringLiteralChar = null, index = 0 ; index < expression.length ; index++) {
       const character = expression.charAt(index);
 
-      if (insideString) {
-        if (this.isStringLiteral(character)) {
-          insideString = false;
-          continue;
-        }
-
+      if (stringLiteralChar) {
         if (character === Delimiter.BACK_SLASH) {
           index++;
           continue;
         }
+
+        if (character === stringLiteralChar) {
+          stringLiteralChar = null;
+        }
+
+        continue;
       }
 
       if (this.isStringLiteral(character)) {
-        insideString = true;
+        stringLiteralChar = character;
         continue;
       }
 
       if (this.isLeftBracket(character)) {
         bracketStack++;
-        continue;
       }
 
-      if (this.isRightBracket(character)) {
+      if(this.isRightBracket(character)) {
         bracketStack--;
-        continue;
       }
 
-      if (character === symbol) {
-        return index;
-      }
-    }
-
-    return -1;
-  }
-
-  private getFirstSymbolPosition(expression: string, symbol: AnySymbol): number {
-    let index = 0;
-    for (let stringLiteralChar = null ; index < expression.length ; index++) {
-      const character = expression.charAt(index);
-      if (stringLiteralChar && character === stringLiteralChar) {
-        stringLiteralChar = null;
-      }
-
-      if (stringLiteralChar) {
-        continue;
-      }
-
-      if (!stringLiteralChar) {
-        if (character === symbol) {
-          return  index;
-        }
+      if (bracketStack === 0 && character === symbol) {
+        return  index;
       }
     }
 
     return -1;
   }
 
-  private getLastSymbolPosition(expression: string, symbol: AnySymbol): number {
-    let index = expression.length - 1;
-    for (let stringLiteralChar = null ; index >= 0 ; index--) {
+  /***
+   * @param expression
+   * @param symbol
+   */
+  private getLastSymbolPositionAtTopLevel(expression: string, symbol: AnySymbol): number {
+    let expectedStack = 0;
+    if (this.isBracket(symbol)) {
+      expectedStack = this.isRightBracket(symbol) ? -1 : 1;
+    }
+
+    for (let stringLiteralChar = null, bracketStack = 0, index = expression.length - 1; index >= 0 ; index--) {
       const character = expression.charAt(index);
 
-      if (stringLiteralChar && character === stringLiteralChar) {
-        stringLiteralChar = null;
-      }
-
       if (stringLiteralChar) {
+        if (character === Delimiter.BACK_SLASH) {
+          index++;
+          continue;
+        }
+
+        if (character === stringLiteralChar) {
+          stringLiteralChar = null;
+        }
+
         continue;
       }
 
-      if (!stringLiteralChar) {
-        if (character === symbol) {
-          return  index;
-        }
+      if (this.isStringLiteral(character)) {
+        stringLiteralChar = character;
+        continue;
+      }
+
+      if (this.isLeftBracket(character)) {
+        bracketStack++;
+      }
+
+      if(this.isRightBracket(character)) {
+        bracketStack--;
+      }
+
+      if (bracketStack === expectedStack && character === symbol) {
+        return  index;
       }
     }
 
     return -1;
   }
 
-  private getLastSymbolPositionBefore(expression: string, symbol: AnySymbol, lastIndex: number): number {
-    let index = lastIndex;
-    for (let stringLiteralChar = null ; index >= 0 ; index--) {
+  private getLastSymbolPositionAtTopLevelAfter(expression: string, symbol: AnySymbol, startIndex: number): number {
+    for (let stringLiteralChar = null, bracketStack = 0, index = expression.length - 1; index >= startIndex ; index--) {
       const character = expression.charAt(index);
 
-      if (stringLiteralChar && character === stringLiteralChar) {
-        stringLiteralChar = null;
-      }
-
       if (stringLiteralChar) {
+        if (character === Delimiter.BACK_SLASH) {
+          index++;
+          continue;
+        }
+
+        if (character === stringLiteralChar) {
+          stringLiteralChar = null;
+        }
+
         continue;
       }
 
-      if (!stringLiteralChar) {
-        if (character === symbol) {
-          return  index;
-        }
+      if (this.isStringLiteral(character)) {
+        stringLiteralChar = character;
+        continue;
+      }
+
+      if (this.isLeftBracket(character)) {
+        bracketStack++;
+      }
+
+      if(this.isRightBracket(character)) {
+        bracketStack--;
+      }
+
+      if (bracketStack === 0 && character === symbol) {
+        return  index;
       }
     }
 
@@ -629,10 +652,11 @@ export class ParserService {
    */
   public fromVariableExpression(expression: string, parent: Scope): VariableExpression {
     expression = expression.trim();
-    const target = this.getFirstTokenName(expression);
-    const attributeExpression = expression.substring(target.length + 1);
-    const attribute = attributeExpression !== ''?
-      this.fromFunctionInvocationOrVariableExpression(attributeExpression, parent) : null;
+    const periodDelimiterIndex = this.getFirstSymbolPosition(expression, Delimiter.PERIOD);
+    const target = expression.substring(0, periodDelimiterIndex).trim();
+    const attributeExpression = expression.substring(periodDelimiterIndex + 1);
+    const attribute = attributeExpression !== '' ?
+      this.fromExpressionAttribute(attributeExpression, parent) : null;
 
     return new VariableExpression(parent, target, attribute);
   }
@@ -753,10 +777,12 @@ export class ParserService {
    * @param parent The parent scope of the FunctionInvocationExpression
    */
   public fromFunctionInvocationExpression(expression: string, parent: Scope): FunctionInvocationExpression {
-    expression = expression.trim();
-    const target = this.getFirstTokenName(expression);
+    const periodDelimiterIndex = this.getFirstSymbolPositionAtTopLevel(expression, Delimiter.PERIOD);
 
-    const leftBracketPosition = this.getFirstSymbolPosition(expression, Bracket.LEFT_BRACE);
+    const targetExpression = expression.substring(0, periodDelimiterIndex).trim();
+    const target = this.fromExpressionOrFunctionScope(targetExpression, parent);
+
+    const leftBracketPosition = this.getLastSymbolPositionBefore(expression, Bracket.LEFT_BRACE, periodDelimiterIndex);
     const rightBracketPosition = this.getPartnerBracePosition(expression, leftBracketPosition);
     const argsExpression = expression.substring(leftBracketPosition + 1, rightBracketPosition);
     const args = this.getMethodArguments(argsExpression, parent);
@@ -773,23 +799,36 @@ export class ParserService {
     return this.getMethodArguments(argsExpression, parent);
   }
 
+  private fromExpressionOrFunctionScope(expression: string, parent: Scope): AnyExpression | FunctionScope {
+
+  }
+
 
 
   /***
-   * @param attributeExpression The attribute attached to the end of either a
+   * @param expression The attribute attached to the end of either a
    * FunctionInvocationExpression or a normal VariableExpression. This attribute
    * can also be present after other constructs to access the properties or methods
    * of those constructs.
    * Attribute can be present after Notation and Expression constructs
    * @param parent
    */
-  private fromFunctionInvocationOrVariableExpression(attributeExpression: string, parent: Scope):
+  private fromFunctionInvocationOrVariableExpression(expression: string, parent: Scope):
     FunctionInvocationExpression | VariableExpression {
-    if (this.attributeIsAFunctionInvocation(attributeExpression)) {
-      return this.fromFunctionInvocationExpression(attributeExpression, parent);
+    if (this.isFunctionInvocationExpression(expression)) {
+      return this.fromFunctionInvocationExpression(expression, parent);
     }
 
-    return this.fromVariableExpression(attributeExpression, parent);
+    return this.fromVariableExpression(expression, parent);
+  }
+
+  private isFunctionInvocationExpression(expression: string): boolean {
+    const periodDelimiterIndex = this.getFirstSymbolPositionAtTopLevel(expression, Delimiter.PERIOD);
+    if (periodDelimiterIndex === -1) {
+      return expression.charAt(expression.length - 1) === Bracket.RIGHT_BRACE;
+    }
+
+    return this.isFunctionInvocationExpression(expression.substring(0, periodDelimiterIndex).trim());
   }
 
   /***
@@ -904,7 +943,126 @@ export class ParserService {
 
   // TODO: Add functionality for all expressions and notations
   private fromExpressionOrNotation(expression: string, parent: Scope): AnyExpression | AnyNotation {
-    return this.fromFunctionInvocationOrVariableExpression(expression, parent);
+    if (this.isNotation(expression)) {
+      return this.fromNotation(expression, parent);
+    }
+
+    return this.fromExpression(expression, parent);
+  }
+
+  private isNotation(expression: string): boolean {
+    return this.isStringNotation(expression) ||
+      this.isNumberNotation(expression) ||
+      this.isObjectNotation(expression) ||
+      this.isArrayNotation(expression) ||
+      this.isBooleanNotation(expression) ;
+  }
+
+  private isBooleanNotation(expression: string): boolean {
+    const periodDelimiterIndex = this.getFirstSymbolPositionAtTopLevel(expression, Delimiter.PERIOD);
+    if (periodDelimiterIndex === -1) {
+      return this.BOOLEAN_VALUES.has(expression);
+    }
+
+    return this.isBooleanNotation(expression.substring(0, periodDelimiterIndex).trim());
+  }
+
+  private isArrayNotation(expression: string): boolean {
+    const periodDelimiterIndex = this.getFirstSymbolPositionAtTopLevel(expression, Delimiter.PERIOD);
+    if (periodDelimiterIndex === -1) {
+      return expression.charAt(0) === Bracket.LEFT_SQUARED &&
+        expression.charAt(expression.length - 1) === Bracket.RIGHT_SQUARED ;
+    }
+
+    return this.isArrayNotation(expression.substring(0, periodDelimiterIndex).trim());
+  }
+
+  private isObjectNotation(expression: string): boolean {
+    const periodDelimiterIndex = this.getFirstSymbolPositionAtTopLevel(expression, Delimiter.PERIOD);
+
+    try {
+      JSON.parse(expression.substring(0, periodDelimiterIndex));
+    } catch (exception) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private fromNotation(expression: string, parent: Scope): AnyNotation {
+    if (this.isStringNotation(expression)) {
+      return this.fromStringNotation(expression, parent);
+    }
+
+    if (this.isBooleanNotation(expression)) {
+      return this.fromBooleanNotation(expression, parent);
+    }
+
+    if(this.isArrayNotation(expression)) {
+      return this.fromArrayNotation(expression, parent);
+    }
+
+    if (this.isNumberNotation(expression)) {
+      return this.fromNumberNotation(expression, parent);
+    }
+
+    return this.fromObjectNotation(expression, parent);
+  }
+
+  private fromBooleanNotation(expression: string, parent: Scope): BooleanNotation {
+    let attributeExpression = null, targetExpression = expression;
+    const periodDelimiterIndex = this.getFirstSymbolPositionAtTopLevel(expression, Delimiter.PERIOD);
+    if (periodDelimiterIndex !== -1) {
+      targetExpression = expression.substring(0, periodDelimiterIndex);
+      attributeExpression = expression.substring(periodDelimiterIndex + 1);
+    }
+    const target = Boolean(targetExpression);
+    const attribute = attributeExpression ? this.fromExpressionAttribute(attributeExpression, parent) : null;
+
+    return new BooleanNotation(parent, target, attribute);
+  }
+
+  private fromArrayNotation(expression: string, parent: Scope): ArrayNotation {
+    let attributeExpression = null, targetExpression = expression;
+    const periodDelimiterIndex = this.getFirstSymbolPositionAtTopLevel(expression, Delimiter.PERIOD);
+    if (periodDelimiterIndex !== -1) {
+      const targetExpression = expression.substring(0, periodDelimiterIndex).trim();
+      const attributeExpression = expression.substring(periodDelimiterIndex + 1);
+    }
+
+    const commaSeparatedElements = expression.substring(1, expression.length - 1);
+    const elementExpressions: Array<string> = this.getCommaSeparatedConstructs(commaSeparatedElements);
+    const arrayElements: Array<ArrayElement> = this.fromExpressionOrNotationOrFunctionScopeElements(elementExpressions, parent);
+    const attribute = attributeExpression ? this.fromExpressionAttribute(attributeExpression, parent) : null ;
+
+    return new ArrayNotation(parent, arrayElements, attribute);
+  }
+
+  private fromExpressionOrNotationOrFunctionScopeElements(expressions: string[], parent: Scope):
+    Array<FunctionScope | AnyExpression | AnyNotation> {
+
+    const result: Array<FunctionScope | AnyExpression | AnyNotation> = [];
+    for (const expression of expressions) {
+      result.push(this.fromExpressionOrNotationOrFunctionScope(expression, parent));
+    }
+
+    return result;
+  }
+
+  private getCommaSeparatedConstructs(expression: string): Array<string> {
+    const result: Array<string> = [];
+    const firstCommaPosition = this.getFirstSymbolPositionAtTopLevel(expression, Delimiter.COMMA);
+    if (firstCommaPosition === -1) {
+      result.push(expression);
+      return result;
+    }
+
+    result.push(
+      expression.substring(0, firstCommaPosition),
+      ...this.getCommaSeparatedConstructs(expression.substring(firstCommaPosition + 1))
+    );
+
+    return result;
   }
 
   private fromExpressionOrNotationTokens(tokens: Array<string>, parent: Scope): AnyExpression | AnyNotation {

@@ -5,7 +5,7 @@ import {Pair} from "../../common/Pair";
 import {StringNotation} from "../notation/string.notation";
 import {Bracket} from "../bracket.enum";
 import {Delimiter} from "../delimiter.enum";
-import {PairCodeable} from "../../common/PairCoddable";
+import {PairCodeable} from "../../common/PairCodeable";
 import {Scope} from "../scope/scope.construct";
 import {AnyDeconstructedExpression} from "./any-deconstructed-expression.type";
 

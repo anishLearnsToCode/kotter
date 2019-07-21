@@ -10,7 +10,5 @@ export declare type AnyNotation =
   ObjectNotation |
   NumberNotation |
   StringNotation |
-  BigIntNotation |
   ArrayNotation |
-  BooleanNotation |
-  RegexNotation ;
+  BooleanNotation ;

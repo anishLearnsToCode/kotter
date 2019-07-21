@@ -15,9 +15,12 @@ let person = {
 };
 
 let num = 10.0.toExponential().trim();
-
+num = true.toString();
 let firstName = person.firstName;
 console.log(person);
+
+let str = 'test';
+console.log('substring test here:', str.substring(4) === '');
 
 console.log(Object.getPrototypeOf(person));
 

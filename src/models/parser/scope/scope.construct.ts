@@ -2,6 +2,7 @@ import {Construct} from "../construct";
 import { Codeable } from "../../codeable";
 import {Delimiter} from "../delimiter.enum";
 import {Bracket} from "../bracket.enum";
+import {Block} from "../block/block.construct";
 
 export class Scope extends Construct implements Codeable {
   body: Array<Construct> = [];
@@ -23,7 +24,8 @@ export class Scope extends Construct implements Codeable {
   private codeFromBody(): string {
     let code = '';
     for(const construct of this.body) {
-      code += (construct instanceof Scope) ? construct.code() :
+      code += (construct instanceof Scope || construct instanceof Block) ?
+        construct.code() :
         construct.code() + Delimiter.SEMI_COLON;
     }
 
