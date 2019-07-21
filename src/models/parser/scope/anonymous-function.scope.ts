@@ -6,7 +6,7 @@ import {Operator} from "../operator/operator.enum";
 import {Bracket} from "../bracket.enum";
 
 export class AnonymousFunctionScope extends FunctionScope implements Codeable {
-  constructor(parent: Scope, body: Array<Construct>, parameters: Array<FunctionParameter>, isScoped: boolean) {
+  constructor(parent: Scope, body: Array<Construct>, parameters: Array<FunctionParameter>) {
     super(parent, body, parameters);
   }
 

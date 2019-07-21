@@ -11,7 +11,7 @@ export abstract class DeconstructedExpression<T extends Codeable> extends Constr
     this.elements = elements;
   }
 
-  public elementsAsCode(): string {
+  elementsAsCode(): string {
     let code = '';
     for (const element of this.elements) {
       code += Delimiter.COMMA + Delimiter.WHITE_SPACE + element.code();

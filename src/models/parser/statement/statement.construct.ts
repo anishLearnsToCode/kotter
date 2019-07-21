@@ -6,13 +6,12 @@ import {AnyNotation} from "../notation/any-notation.type";
 import {ParserService} from "../../../services/parser.service";
 import {OperatorExpression} from "../operator/operator.expression";
 
+
 export class Statement extends Construct implements Codeable {
   tokens: Array<AnyExpression | OperatorExpression | AnyNotation>;
-  private readonly parser = ParserService.getService();
 
   constructor(parent: Scope, tokens: Array<AnyExpression | AnyNotation | OperatorExpression>) {
-    super();
-    this.parentScope = parent;
+    super(parent);
     this.tokens = tokens;
   }
 

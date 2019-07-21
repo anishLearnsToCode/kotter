@@ -11,13 +11,12 @@ export class Scope extends Construct implements Codeable {
   }
 
   public constructor(parentScope: Scope | null, body: Array<Construct>) {
-    super();
-    super.parentScope = parentScope;
+    super(parentScope);
     this.body = body;
   }
 
-  code(): string {
-    return this.parentScope === null ? this.codeFromBody() :
+  code(withBrackets = true): string {
+    return !withBrackets ? this.codeFromBody() :
       Bracket.LEFT_CURLY_BRACE + this.codeFromBody() + Bracket.RIGHT_CURLY_BRACE ;
   }
 

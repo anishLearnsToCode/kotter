@@ -5,7 +5,7 @@ import { FunctionArgument } from "../functionArgument";
 import {AnyExpression} from "./any-expression.type";
 import {FunctionScope} from "../scope/function.scope";
 
-// todo FIE can target expression (VE | FIE | GE | AIE) and also FS (both AFS and FDS)
+
 export declare type FunctionInvocationExpressionTarget = AnyExpression | FunctionScope;
 
 

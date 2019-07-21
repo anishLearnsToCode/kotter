@@ -13,8 +13,7 @@ export class InstantiationExpression extends Construct implements Codeable {
 
   constructor(parent: Scope, instantiations: Array<VariableExpression | AssignmentExpression>,
               initializer: ReservedKeywords.VAR | ReservedKeywords.LET | ReservedKeywords.CONST) {
-    super();
-    this.parentScope = parent;
+    super(parent);
     this.initializer = initializer;
     this.instantiations = instantiations;
   }

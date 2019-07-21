@@ -1,3 +1,3 @@
 export interface Codeable {
-  code(): string;
+  code(withBrackets?: boolean): string;
 }

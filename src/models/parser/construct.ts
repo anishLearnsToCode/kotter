@@ -5,7 +5,7 @@ export abstract class Construct implements Codeable {
   parentScope: Scope | null | undefined;
   abstract code(): string ;
 
-  protected constructor(parent: Scope) {
+  protected constructor(parent: Scope | null) {
     this.parentScope = parent;
   }
 }

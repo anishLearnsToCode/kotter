@@ -646,4 +646,8 @@ export class ParserService {
   public isOperator(token: string): boolean {
 
   }
+
+  public removeAllLineBreaks(expression: string): string {
+    return expression.replace(/(\r\n|\n|\r)/gm, ' ');
+  }
 }

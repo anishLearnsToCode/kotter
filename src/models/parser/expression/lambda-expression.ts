@@ -11,8 +11,7 @@ export class LambdaExpression extends Construct implements Codeable {
   statement: Statement;
 
   constructor(parent: Scope, parameters: Array<VariableExpression>, statement: Statement) {
-    super();
-    this.parentScope = parent;
+    super(parent);
     this.parameters = parameters;
     this.statement = statement;
   }
