@@ -33,8 +33,11 @@ import {LambdaExpression} from "../models/parser/expression/lambda-expression";
 import {Construct} from "../models/parser/construct";
 import {AnyDeconstructedExpression} from "../models/parser/instantiation/any-deconstructed-expression.type";
 import {ArrayDeconstructedExpression} from "../models/parser/instantiation/array-deconstructed-expression";
-import {ObjectDeconstructedExpression} from "../models/parser/instantiation/object-deconstructed-expression";
-import {DeconstructedExpression} from "../models/parser/instantiation/deconstructed-expression";
+import {
+  ObjectDeconstructedElement,
+  ObjectDeconstructedExpression
+} from "../models/parser/instantiation/object-deconstructed-expression";
+import {PairCodeable} from "../models/common/PairCodeable";
 
 export class ParserService {
   private static serviceInstance = new ParserService();
@@ -869,11 +872,16 @@ export class ParserService {
       return this.fromAssignmentExression(parameter, parent);
     }
 
-    if (this.isVariableExpression(parameter)) {
-      return this.fromVariableExpression(parameter, parent);
+    return this.fromVariableOrDeconstructedExpression(parameter, parent);
+  }
+
+  private fromVariableOrDeconstructedExpression(expression: string, parent: Scope):
+    AnyDeconstructedExpression | VariableExpression {
+    if (this.isVariableExpression(expression)) {
+      return this.fromVariableExpression(expression, parent);
     }
 
-    return this.fromDeconstructedExpression(parameter, parent);
+    return this.fromDeconstructedExpression(expression, parent);
   }
 
   private fromDeconstructedExpression(expression: string, parent: Scope): AnyDeconstructedExpression {
@@ -892,17 +900,44 @@ export class ParserService {
   }
 
   private fromDeconstructedObjectExpression(expression: string, parent: Scope): ObjectDeconstructedExpression {
-    const commaSecretedBody = expression.substring(1, expression.length - 1).trim();
+    const commaSeparatedBody = expression.substring(1, expression.length - 1).trim();
+    const elementsList = this.getCommaSeparatedConstructs(commaSeparatedBody);
+    const elements = this.fromObjectDeconstructedElements(elementsList, parent);
+    return new ObjectDeconstructedExpression(parent, elements);
+  }
+
+  private fromObjectDeconstructedElements(elements: Array<string>, parent: Scope): Array<ObjectDeconstructedElement> {
+    const result: Array<ObjectDeconstructedElement> = [];
+    for (const element of elements) {
+      if (this.isVariableExpression(element)) {
+        result.push(this.fromVariableExpression(element, parent));
+      } else {
+        result.push(this.fromObjectDeconstructedPair(element, parent));
+      }
+    }
+
+    return result;
+  }
+
+  private fromObjectDeconstructedPair(pair: string, parent: Scope): PairCodeable<VariableExpression | StringNotation, VariableExpression | AnyDeconstructedExpression> {
+    const colonDelimiterIndex = this.getFirstSymbolPositionAtTopLevel(pair, Delimiter.COLON);
+    const keyExpression = pair.substring(0, colonDelimiterIndex).trim();
+    const key = this.fromExpressionOrNotation(keyExpression, parent) as VariableExpression | StringNotation ;
+    const valueExpression = pair.substring(colonDelimiterIndex + 1);
+    const value = this.fromVariableOrDeconstructedExpression(valueExpression, parent);
+    return new PairCodeable(key, value);
   }
 
   private isVariableExpression(expression: string): boolean {
-    let targetExpression = expression;
-    const periodDelimiterIndex = this.getFirstSymbolPositionAtTopLevel(expression, Delimiter.PERIOD);
-    if (periodDelimiterIndex !== -1) {
-      targetExpression = expression.substring(0, periodDelimiterIndex);
+    const colonPosition = this.getFirstSymbolPositionAtTopLevel(expression, Delimiter.COLON);
+    if (colonPosition !== -1) {
+      return false;
     }
 
-    return !this.containsBrackets(targetExpression);
+    const periodIndex = this.getFirstSymbolPositionAtTopLevel(expression, Delimiter.PERIOD);
+    const tokens = this.getTokensFromStatement(expression);
+    const operators = this.getOperators(tokens);
+    return operators.length === 0 && !this.containsBrackets(expression.substring(0, periodIndex).trim()) ;
   }
 
   private containsBrackets(expression: string): boolean {
