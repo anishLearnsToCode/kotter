@@ -12,8 +12,9 @@ export declare type FunctionInvocationExpressionTarget = AnyExpression | Functio
 export class FunctionInvocationExpression extends Expression<FunctionInvocationExpressionTarget> implements Codeable {
   args: Array<FunctionArgument> = [];
 
-  constructor(parent: Scope, target: FunctionInvocationExpressionTarget, value: ExpressionAttribute,
-              args: Array<FunctionArgument>) {
+  constructor(parent: Scope, target: FunctionInvocationExpressionTarget,
+              value: ExpressionAttribute, args: Array<FunctionArgument>) {
+
     super(parent, target, value);
     this.args = args;
   }

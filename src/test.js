@@ -14,6 +14,8 @@ let person = {
   }
 };
 
+let num = 10.0.toExponential().trim();
+
 let firstName = person.firstName;
 console.log(person);
 

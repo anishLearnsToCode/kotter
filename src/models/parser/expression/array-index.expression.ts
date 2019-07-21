@@ -6,9 +6,10 @@ import {ObjectNotation} from "../notation/object.notation";
 import {Statement} from "../statement/statement.construct";
 import {NumberNotation} from "../notation/number.notation";
 import {StringNotation} from "../notation/string.notation";
+import {AnyNotation} from "../notation/any-notation.type";
 
 
-export declare type ArrayIndexExpressionTargetType = AnyExpression | ObjectNotation;
+export declare type ArrayIndexExpressionTargetType = AnyExpression | AnyNotation;
 export declare type ArrayIndex = NumberNotation | StringNotation | AnyExpression | Statement ;
 
 export class ArrayIndexExpression extends Expression<ArrayIndexExpressionTargetType> implements Codeable {

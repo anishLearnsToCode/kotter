@@ -1,3 +1,5 @@
+// todo add support for continue and break
+
 export enum Operator {
   // Increment and Decrement
   INCREMENT = '++',
@@ -16,7 +18,7 @@ export enum Operator {
   DIVISION = '/',
   MULTIPLICATION = '*',
   REMAINDER = '%',
-  Exponential = '**',
+  EXPONENTIAL = '**',
 
   // Relational Operators
   IN = 'in',
@@ -49,6 +51,9 @@ export enum Operator {
   // Ternary Operator
   CONDITIONAL_TERNARY_OPERATOR = '?',
 
+  // Spread/Rest Operator
+  SPREAD = '...',
+
   // Assignment Operators
   ASSIGNMENT = '=',
   MULTIPLICATION_ASSIGNMENT = '*=',
@@ -62,8 +67,4 @@ export enum Operator {
   BITWISE_AND_ASSIGNMENT = '&=',
   BITWISE_OR_ASSIGNMENT = '|=',
   BITWISE_XOR_ASSIGNMENT = '^=',
-
-  COMMA = ',',
-
-  LAMBDA = '=>'
 }
