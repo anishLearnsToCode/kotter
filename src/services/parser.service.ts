@@ -7,7 +7,11 @@ import {GroupExpression, GroupExpressionTargetType} from "../models/parser/expre
 import {AnyExpression} from "../models/parser/expression/any-expression.type";
 import {FunctionArgument} from "../models/parser/functionArgument";
 import {AnyNotation} from "../models/parser/notation/any-notation.type";
-import {AssignmentExpression} from "../models/parser/instantiation/assignment-expression";
+import {
+  AssignmentExpression,
+  AssignmentExpressionTargetType,
+  AssignmentExpressionValueType
+} from "../models/parser/instantiation/assignment-expression";
 import {Symbol} from "../models/parser/symbol.enum";
 import {
   ArrayIndex,
@@ -38,6 +42,8 @@ import {
   ObjectDeconstructedExpression
 } from "../models/parser/instantiation/object-deconstructed-expression";
 import {PairCodeable} from "../models/common/PairCodeable";
+import {AssignmentOperator} from "../models/parser/operator/assignment-operator.enum";
+import {GeneratorFunctionScope} from "../models/parser/scope/generator-function-scope";
 
 export class ParserService {
   private static serviceInstance = new ParserService();
@@ -135,6 +141,21 @@ export class ParserService {
     Operator.BITWISE_OR_ASSIGNMENT,
     Operator.BITWISE_XOR_ASSIGNMENT,
     Operator.SPREAD
+  ]);
+
+  private ASSIGNMENT_OPERATORS = new Set<AssignmentOperator>([
+    AssignmentOperator.ADDITION_ASSIGNMENT,
+    AssignmentOperator.ASSIGNMENT,
+    AssignmentOperator.BITWISE_AND_ASSIGNMENT,
+    AssignmentOperator.BITWISE_OR_ASSIGNMENT,
+    AssignmentOperator.MULTIPLICATION_ASSIGNMENT,
+    AssignmentOperator.DIVISION_ASSIGNMENT,
+    AssignmentOperator.SUBTRACTION_ASSIGNMENT,
+    AssignmentOperator.REMAINDER_ASSIGNMENT,
+    AssignmentOperator.LEFT_SHIFT_ASSIGNMENT,
+    AssignmentOperator.UNSIGNED_RIGHT_SHIFT_ASSIGNMENT,
+    AssignmentOperator.RIGHT_SHIFT_ASSIGNMENT,
+    AssignmentOperator.BITWISE_XOR_ASSIGNMENT
   ]);
 
   private readonly BOOLEAN_VALUES = new Set<string>(['true', 'false']);
@@ -831,7 +852,7 @@ export class ParserService {
     return this.fromAnonymousFunctionScope(expression, parent);
   }
 
-  private fromFunctionOrGeneratorFunctionScope(expression: string, parent: Scope): FunctionDeclarationScope | GeneratorFunction {
+  private fromFunctionOrGeneratorFunctionScope(expression: string, parent: Scope): FunctionDeclarationScope | GeneratorFunctionScope {
     if (expression.charAt(ReservedKeywords.FUNCTION.length) === Operator.MULTIPLICATION) {
       return this.fromGeneratorFunctionScope(expression, parent);
     }
@@ -965,16 +986,68 @@ export class ParserService {
       expression.charAt(expression.length - 1) === Bracket.RIGHT_CURLY_BRACE ;
   }
 
-  private fromAssignmentExression(expression: string, parent: Scope): AssignmentExpression {
+  private fromAssignmentExpression(expression: string, parent: Scope): AssignmentExpression {
+    const equalsIndex = this.getFirstSymbolPositionAtTopLevel(expression, Operator.EQUALITY);
+    const previousOperators = this.getPreviousContiguousOperators(expression, equalsIndex - 1);
+    let targetExpression, valueExpression = expression.substring(equalsIndex + 1), assignmentOperator = AssignmentOperator.ASSIGNMENT;
+    if (previousOperators.length > 0 && this.isAssignmentOperator(previousOperators + Operator.EQUALITY)) {
+      targetExpression = expression.substring(0, equalsIndex - previousOperators.length);
+      assignmentOperator = (previousOperators + Operator.EQUALITY) as AssignmentOperator;
+    } else {
+      targetExpression = expression.substring(0, equalsIndex);
+    }
+
+    const target = this.fromExpressionOrDeconstructedExpression(targetExpression, parent);
+    const value = this.fromExpressionOrNotationOrFunctionScopeOrLambda(valueExpression, parent);
+    return new AssignmentExpression(parent, target, value, assignmentOperator);
+  }
+
+  private fromExpressionOrNotationOrFunctionScopeOrLambdaOrAssignment(expression: string, parent: Scope): AssignmentExpressionValueType {
+    if (this.isAssignmentExpression(expression)) {
+      return this.fromAssignmentExpression(expression, parent);
+    }
+
+    return this.fromExpressionOrNotationOrFunctionScopeOrLambda(expression, parent);
+  }
+
+  private fromExpressionOrDeconstructedExpression(expression: string, parent: Scope): AssignmentExpressionTargetType {
 
   }
 
-  private fromGeneratorFunctionScope(expression: string, parent: Scope): GeneratorFunction {
+  private isAssignmentOperator(expression: string): boolean {
+    return this.ASSIGNMENT_OPERATORS.has(expression as AssignmentOperator);
+  }
 
+  private getPreviousContiguousOperators(expression: string, from: number): string {
+    let result = '';
+    for (let index = from ; index >= 0 ; index--) {
+      if (this.isOperator(expression.charAt(index))) {
+        result += expression.charAt(index);
+      } else {
+        break;
+      }
+    }
+
+    return result;
+  }
+
+  private fromGeneratorFunctionScope(expression: string, parent: Scope): GeneratorFunctionScope {
+    const leftBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_BRACE);
+    const rightBraceIndex = this.partnerBracePosition(expression, leftBraceIndex);
+    const name = expression.substring(ReservedKeywords.GENERATOR_FUNCTION.length, leftBraceIndex).trim();
+    const commaSeparatedParameters = expression.substring(leftBraceIndex + 1, rightBraceIndex).trim();
+    const parametersList = this.getCommaSeparatedConstructs(commaSeparatedParameters);
+    const parameters = this.getParameters(parametersList, parent);
+    const leftCurlyBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_CURLY_BRACE);
+    const rightCurlyBraceIndex = this.getLastSymbolPositionAtTopLevel(expression, Bracket.RIGHT_CURLY_BRACE);
+    const bodyExpression = expression.substring(leftBraceIndex + 1, rightCurlyBraceIndex);
+    const generatorFunction = new GeneratorFunctionScope(parent, [], parameters, name);
+    generatorFunction.body = this.fromScopeBody(bodyExpression, generatorFunction);
+    return generatorFunction;
   }
 
   private fromAnonymousFunctionScope(expression: string, parent: Scope): AnonymousFunctionScope {
-
+    
   }
 
   private fromScope(expression: String, parent: Scope): Scope {
