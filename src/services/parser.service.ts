@@ -233,18 +233,17 @@ export class ParserService {
   }
 
   /***
-   *
    * @param tokens An Array of code tokens that do not contain ant \n\r newline characters but may have spaces
    * @param parent
    */
   private fromStatement(tokens: Array<string>, parent: Scope): Statement | AssignmentExpression | AnyNotation | AnyExpression {
-    tokens = condenseTokens(tokens);
+    tokens = this.condenseTokens(tokens);
 
     if (tokens.length < 2) {
       return this.fromExpressionOrNotation(tokens[0], parent);
     }
 
-    const operators: Array<string> = getOperators(tokens);
+    const operators: Array<string> = this.getOperators(tokens);
     if (operators.length === 1 && operators[0] === Operator.EQUALITY) {
       return this.fromAssignmentTokens(tokens, parent);
     }
@@ -261,8 +260,43 @@ export class ParserService {
     return new Statement(parent, resultTokens);
   }
 
+  private getOperators(tokens: Array<string>): Array<string> {
+    const result: Array<string> = [];
+    for (const token of tokens) {
+      if (this.isOperator(token)) {
+        result.push(token);
+      }
+    }
+
+    return result;
+  }
+
   private condenseTokens(tokens: Array<string>): Array<string> {
-    
+    const result: Array<string> = [];
+    let currentOperator = null;
+    for (const token of tokens) {
+      if (this.isOperator(token)) {
+        if (!currentOperator) {
+          currentOperator = token;
+          continue;
+        }
+
+        if (this.isOperator(currentOperator + token)) {
+          currentOperator += token;
+        } else {
+          result.push(currentOperator, token);
+          currentOperator = null;
+        }
+      } else {
+        if (currentOperator) {
+          result.push(currentOperator);
+          currentOperator = null;
+        }
+        result.push(token);
+      }
+    }
+
+    return result;
   }
 
   private tokensContainsOperator(tokens: string[]): boolean {
