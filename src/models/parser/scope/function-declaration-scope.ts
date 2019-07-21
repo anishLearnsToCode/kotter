@@ -10,7 +10,7 @@ import {ClassScope} from "./class.scope";
 // todo add DE
 
 
-export class FunctionDecelerationScope extends FunctionScope implements Codeable {
+export class FunctionDeclarationScope extends FunctionScope implements Codeable {
   private readonly name: string;
 
   constructor(parent: Scope, body: Array<Construct>, parameters: Array<FunctionParameter>, name: string) {

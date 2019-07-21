@@ -1,9 +1,17 @@
-export class Pair<T, U> {
-  private key: T;
-  private value: U;
+export class Pair<K, V> {
+  private key: K;
+  private value: V;
 
-  constructor(key: T, value: U) {
+  constructor(key: K, value: V) {
     this.key = key;
     this.value = value;
+  }
+
+  getKey(): K {
+    return this.key;
+  }
+
+  getValue(): V {
+    return this.value;
   }
 }

@@ -7,11 +7,7 @@ import {GroupExpression, GroupExpressionTargetType} from "../models/parser/expre
 import {AnyExpression} from "../models/parser/expression/any-expression.type";
 import {FunctionArgument} from "../models/parser/functionArgument";
 import {AnyNotation} from "../models/parser/notation/any-notation.type";
-import {
-  AssignmentExpression,
-  AssignmentExpressionTargetType,
-  AssignmentExpressionValueType
-} from "../models/parser/instantiation/assignment-expression";
+import {AssignmentExpression} from "../models/parser/instantiation/assignment-expression";
 import {Symbol} from "../models/parser/symbol.enum";
 import {
   ArrayIndex,
@@ -21,7 +17,7 @@ import {
 import {AnySymbol} from "../models/parser/symbol.type";
 import {ObjectAttributeValue, ObjectNotation} from "../models/parser/notation/object.notation";
 import {Pair} from "../models/common/Pair";
-import {FunctionDecelerationScope} from "../models/parser/scope/function-deceleration-scope";
+import {FunctionDeclarationScope} from "../models/parser/scope/function-declaration-scope";
 import {AnonymousFunctionScope} from "../models/parser/scope/anonymous-function.scope";
 import {ReservedKeywords} from "../models/reserved-keywords.enum";
 import {ExpressionAttribute} from "../models/parser/expression/expression.construct";
@@ -30,9 +26,15 @@ import {NumberNotation} from "../models/parser/notation/number.notation";
 import {Statement} from "../models/parser/statement/statement.construct";
 import {Operator} from "../models/parser/operator/operator.enum";
 import {OperatorExpression} from "../models/parser/operator/operator.expression";
-import {FunctionScope} from "../models/parser/scope/function.scope";
+import {FunctionParameter, FunctionScope} from "../models/parser/scope/function.scope";
 import {ArrayElement, ArrayNotation} from "../models/parser/notation/array-notation";
 import {BooleanNotation} from "../models/parser/notation/boolean.notation";
+import {LambdaExpression} from "../models/parser/expression/lambda-expression";
+import {Construct} from "../models/parser/construct";
+import {AnyDeconstructedExpression} from "../models/parser/instantiation/any-deconstructed-expression.type";
+import {ArrayDeconstructedExpression} from "../models/parser/instantiation/array-deconstructed-expression";
+import {ObjectDeconstructedExpression} from "../models/parser/instantiation/object-deconstructed-expression";
+import {DeconstructedExpression} from "../models/parser/instantiation/deconstructed-expression";
 
 export class ParserService {
   private static serviceInstance = new ParserService();
@@ -652,7 +654,7 @@ export class ParserService {
    */
   public fromVariableExpression(expression: string, parent: Scope): VariableExpression {
     expression = expression.trim();
-    const periodDelimiterIndex = this.getFirstSymbolPosition(expression, Delimiter.PERIOD);
+    const periodDelimiterIndex = this.getFirstSymbolPositionAtTopLevel(expression, Delimiter.PERIOD);
     const target = expression.substring(0, periodDelimiterIndex).trim();
     const attributeExpression = expression.substring(periodDelimiterIndex + 1);
     const attribute = attributeExpression !== '' ?
@@ -663,25 +665,86 @@ export class ParserService {
 
 
   public fromObjectNotation(expression: string, parent: Scope): ObjectNotation {
-    expression = expression.trim().substring(1, expression.length - 2).trim();
-    console.log(expression);
-    const keyValuePairs = this.getParsedMethodArguments(expression);
-    console.log(keyValuePairs);
-
-    for (const pair of keyValuePairs) {
-
+    let attributeExpression = null, targetExpression = expression;
+    const periodDelimiterIndex = this.getFirstSymbolPositionAtTopLevel(expression, Delimiter.PERIOD);
+    if (periodDelimiterIndex !== -1) {
+      targetExpression = expression.substring(0, periodDelimiterIndex).trim();
+      attributeExpression = expression.substring(periodDelimiterIndex + 1).trim();
     }
 
-    return new ObjectNotation(parent, new Map(), null);
+    const body = targetExpression.substring(0, targetExpression.length - 1);
+    const commaSeparatedConstructs: Array<string> = this.getCommaSeparatedConstructs(body);
+    const objectValue = this.getObjectValue(commaSeparatedConstructs, parent);
+    const attribute = attributeExpression ?
+      this.fromExpressionAttribute(attributeExpression, parent) : null ;
+
+    return new ObjectNotation(parent, objectValue, attribute);
+  }
+
+  private getObjectValue(pairs: Array<string>, parent: Scope): Map<string, ObjectAttributeValue> {
+    const result: Map<string, ObjectAttributeValue> = new Map();
+    for (const pair of pairs) {
+      const keyValuePair = this.getObjectKeyValuePairFrom(pair, parent);
+      result.set(keyValuePair.getKey(), keyValuePair.getValue());
+    }
+
+    return result;
   }
 
   private getObjectKeyValuePairFrom(pair: string, parent: Scope): Pair<string, ObjectAttributeValue> {
-    const semiColonPosition = this.getFirstSymbolPosition(pair, Delimiter.COLON);
+    const semiColonPosition = this.getFirstSymbolPositionAtTopLevel(pair, Delimiter.COLON);
     const key = pair.substring(0, semiColonPosition).trim();
     const valueExpression = pair.substring(semiColonPosition + 1).trim();
-    const value = this.fromExpressionOrNotationOrFunctionScope(valueExpression, parent);
+    const value = this.fromExpressionOrNotationOrFunctionScopeOrLambda(valueExpression, parent);
 
     return new Pair(key, value);
+  }
+
+  private fromExpressionOrNotationOrFunctionScopeOrLambda(expression: string, parent: Scope): ObjectAttributeValue {
+    if (this.isLambdaExpression(expression)) {
+      return this.fromLambdaExpression(expression, parent);
+    }
+
+    return this.fromExpressionOrNotationOrFunctionScope(expression, parent);
+  }
+
+  private fromLambdaExpression(expression: string, parent: Scope): LambdaExpression {
+    const lambdaOperatorIndex = this.getFirstSymbolPositionAtTopLevel(expression, Operator.EQUALITY);
+    const parametersExpression = expression.substring(0, lambdaOperatorIndex).trim();
+    const commaSeparatedParameters = parametersExpression.charAt(0) === Bracket.LEFT_BRACE ?
+      parametersExpression.substring(1, parametersExpression.length - 1) : parametersExpression;
+    const parametersList = this.getCommaSeparatedConstructs(commaSeparatedParameters);
+    const parameters: Array<VariableExpression> = this.fromVariableExpressionElements(parametersList, parent);
+    const statementExpression = expression.substring(lambdaOperatorIndex + 2);
+    const statement = this.fromStatementOrExpression(statementExpression, parent);
+
+    return new LambdaExpression(parent, parameters, statement);
+  }
+
+  private fromVariableExpressionElements(parameters: Array<string>, parent: Scope): Array<VariableExpression> {
+    const result: Array<VariableExpression> = [];
+    for (const parameter of parameters) {
+      result.push(this.fromVariableExpression(parameter, parent));
+    }
+    return result;
+  }
+
+  private isLambdaExpression(expression: string): boolean {
+    const equalsDelimiterIndex = this.getFirstSymbolPositionAtTopLevel(expression, Operator.EQUALITY);
+    if (equalsDelimiterIndex !== -1 && expression.charAt(equalsDelimiterIndex + 1) === Operator.GREATER_THAN) {
+      for (let index = equalsDelimiterIndex + 2 ; index < expression.length ; index++) {
+        const character = expression.charAt(index);
+        if (character === Bracket.LEFT_CURLY_BRACE) {
+          return false;
+        }
+        if (character !== ' ') {
+          break;
+        }
+      }
+      return true;
+    }
+
+    return false;
   }
 
   private fromExpressionOrNotationOrFunctionScope(expression: string, parent: Scope): ObjectAttributeValue {
@@ -693,15 +756,30 @@ export class ParserService {
   }
 
   private isAnyFunctionScope(expression: string): boolean {
-    return this.isFunctionScope(expression) || this.isAnonymousFunctionScope(expression);
+    return this.isFunctionOrGeneratorFunction(expression)
+      || this.isAnonymousFunction(expression);
   }
 
-  private isFunctionScope(expresson: string): boolean {
-    return this.getFirstTokenName(expresson.trim()) === ReservedKeywords.FUNCTION;
+  private isFunctionOrGeneratorFunction(expression: string): boolean {
+    return expression.substring(0, ReservedKeywords.FUNCTION.length) === ReservedKeywords.FUNCTION;
   }
 
-  private isAnonymousFunctionScope(expression: string): boolean {
-    return this.indexOfPatternInUnNested(expression, '=>') >= 0;
+  private isAnonymousFunction(expression: string): boolean {
+    const equalsDelimiterIndex = this.getFirstSymbolPositionAtTopLevel(expression, Operator.EQUALITY);
+    if (equalsDelimiterIndex !== -1 && expression.charAt(equalsDelimiterIndex + 1) === Operator.GREATER_THAN) {
+      for (let index = equalsDelimiterIndex + 2 ; index < expression.length ; index++) {
+        const character = expression.charAt(index);
+        if (character === Bracket.LEFT_CURLY_BRACE) {
+          return true;
+        }
+        if (character !== this.WHITE_SPACE) {
+          break;
+        }
+      }
+      return false;
+    }
+
+    return false;
   }
 
   private indexOfPatternInUnNested(expression: string, pattern: string): number {
@@ -734,27 +812,130 @@ export class ParserService {
     return -1;
   }
 
-  private fromAnyFunctionScope(expression: string, parent: Scope): FunctionDecelerationScope | AnonymousFunctionScope {
-    if (this.isFunctionScope(expression)) {
+  private fromAnyFunctionScope(expression: string, parent: Scope): FunctionScope {
+    if (this.isFunctionOrGeneratorFunction(expression)) {
       return this.fromFunctionScope(expression, parent);
     }
 
     return this.fromAnonymousFunctionScope(expression, parent);
   }
 
-  private fromFunctionScope(expression: string, parent: Scope): FunctionDecelerationScope {
-    expression = expression.trim();
-    const leftCurlyBraceIndex = this.getFirstSymbolPosition(expression, Bracket.LEFT_BRACE);
+  private fromFunctionScope(expression: string, parent: Scope): FunctionScope {
+    if (this.isFunctionOrGeneratorFunction(expression)) {
+      return <FunctionScope>this.fromFunctionOrGeneratorFunctionScope(expression, parent);
+    }
+
+    return this.fromAnonymousFunctionScope(expression, parent);
+  }
+
+  private fromFunctionOrGeneratorFunctionScope(expression: string, parent: Scope): FunctionDeclarationScope | GeneratorFunction {
+    if (expression.charAt(ReservedKeywords.FUNCTION.length) === Operator.MULTIPLICATION) {
+      return this.fromGeneratorFunctionScope(expression, parent);
+    }
+
+    return this.fromFunctionDeclarationScope(expression, parent);
+  }
+
+  private fromFunctionDeclarationScope(expression: string, parent: Scope): FunctionDeclarationScope {
+    const leftBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_BRACE);
+    const rightBraceIndex = this.getPartnerBracePosition(expression, leftBraceIndex);
+    const name = expression.substring(ReservedKeywords.FUNCTION.length, leftBraceIndex).trim();
+    const commaSeparatedParameters = expression.substring(leftBraceIndex + 1, rightBraceIndex).trim();
+    const parametersList = this.getCommaSeparatedConstructs(commaSeparatedParameters);
+    const parameters = this.getParameters(parametersList, parent);
+    const leftCurlyBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_CURLY_BRACE);
     const rightCurlyBraceIndex = this.getPartnerBracePosition(expression, leftCurlyBraceIndex);
+    const functionScope = new FunctionDeclarationScope(parent, [], parameters, name);
+    const bodyExpression = expression.substring(leftCurlyBraceIndex + 1, rightCurlyBraceIndex).trim();
+    functionScope.body = this.fromScopeBody(bodyExpression, functionScope);
 
-    const scopeExpression = expression.substring(leftCurlyBraceIndex + 1, rightCurlyBraceIndex);
-    const scope = this.fromScope(scopeExpression, parent);
+    return functionScope;
+  }
 
-    const attributeExpression = expression.substring(rightCurlyBraceIndex + 2);
-    const attribute = this.fromFunctionInvocationOrVariableExpression(attributeExpression, parent);
+  private fromScopeBody(expression: string, parent: Scope): Array<Construct> {
 
-    const argsExpression = expression.substring(ReservedKeywords.FUNCTION.length + 1, leftCurlyBraceIndex);
-    const args =
+  }
+
+  private getParameters(parameters: Array<string>, parent: Scope): Array<FunctionParameter> {
+    const result: Array<FunctionParameter> = [];
+    for (const parameter of parameters) {
+      result.push(this.fromFunctionParameter(parameter, parent));
+    }
+    return result;
+  }
+
+  private fromFunctionParameter(parameter: string, parent: Scope): FunctionParameter {
+    if (this.isAssignmentExpression(parameter)) {
+      return this.fromAssignmentExression(parameter, parent);
+    }
+
+    if (this.isVariableExpression(parameter)) {
+      return this.fromVariableExpression(parameter, parent);
+    }
+
+    return this.fromDeconstructedExpression(parameter, parent);
+  }
+
+  private fromDeconstructedExpression(expression: string, parent: Scope): AnyDeconstructedExpression {
+    if (this.isDeconstructedObjectExpression(expression)) {
+      return this.fromDeconstructedObjectExpression(expression, parent);
+    }
+
+    return this.fromDeconstructedArrayExpression(expression, parent);
+  }
+
+  private fromDeconstructedArrayExpression(expression: string, parent: Scope): ArrayDeconstructedExpression {
+    const commaSeparatedElements = expression.substring(1, expression.length - 1);
+    const elementsList = this.getCommaSeparatedConstructs(commaSeparatedElements);
+    const elements = this.getParameters(elementsList, parent);
+    return new ArrayDeconstructedExpression(parent, elements as Array<VariableExpression | AnyDeconstructedExpression>);
+  }
+
+  private fromDeconstructedObjectExpression(expression: string, parent: Scope): ObjectDeconstructedExpression {
+    const commaSecretedBody = expression.substring(1, expression.length - 1).trim();
+  }
+
+  private isVariableExpression(expression: string): boolean {
+    let targetExpression = expression;
+    const periodDelimiterIndex = this.getFirstSymbolPositionAtTopLevel(expression, Delimiter.PERIOD);
+    if (periodDelimiterIndex !== -1) {
+      targetExpression = expression.substring(0, periodDelimiterIndex);
+    }
+
+    return !this.containsBrackets(targetExpression);
+  }
+
+  private containsBrackets(expression: string): boolean {
+    for (const character of expression) {
+      if (this.isBracket(character)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private isDeconstructedExpression(expression: string): boolean {
+    return this.isDeconstructedArrayExpression(expression) ||
+      this.isDeconstructedObjectExpression(expression) ;
+  }
+
+  private isDeconstructedArrayExpression(expression: string): boolean {
+    return expression.charAt(0) === Bracket.LEFT_SQUARED &&
+      expression.charAt(expression.length - 1) === Bracket.RIGHT_SQUARED ;
+  }
+
+  private isDeconstructedObjectExpression(expression: string): boolean {
+    return expression.charAt(0) === Bracket.LEFT_CURLY_BRACE &&
+      expression.charAt(expression.length - 1) === Bracket.RIGHT_CURLY_BRACE ;
+  }
+
+  private fromAssignmentExression(expression: string, parent: Scope): AssignmentExpression {
+
+  }
+
+  private fromGeneratorFunctionScope(expression: string, parent: Scope): GeneratorFunction {
+
   }
 
   private fromAnonymousFunctionScope(expression: string, parent: Scope): AnonymousFunctionScope {
@@ -764,7 +945,6 @@ export class ParserService {
   private fromScope(expression: String, parent: Scope): Scope {
 
   }
-
 
 
   /***
@@ -941,7 +1121,6 @@ export class ParserService {
     return expressions;
   }
 
-  // TODO: Add functionality for all expressions and notations
   private fromExpressionOrNotation(expression: string, parent: Scope): AnyExpression | AnyNotation {
     if (this.isNotation(expression)) {
       return this.fromNotation(expression, parent);

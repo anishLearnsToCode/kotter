@@ -2,7 +2,7 @@ import { AnyExpression } from "./expression/any-expression.type";
 import { AnyNotation } from "./notation/any-notation.type";
 import {FunctionScope} from "./scope/function.scope";
 import {LambdaExpression} from "./expression/lambda-expression";
-import {FunctionDecelerationScope} from "./scope/function-deceleration-scope";
+import {FunctionDeclarationScope} from "./scope/function-declaration-scope";
 import {AnonymousFunctionScope} from "./scope/anonymous-function.scope";
 import {Statement} from "./statement/statement.construct";
 
