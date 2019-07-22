@@ -9,9 +9,10 @@ import {Bracket} from "../bracket.enum";
 import {Delimiter} from "../delimiter.enum";
 import {FunctionScope} from "../scope/function.scope";
 import {Statement} from "../statement/statement.construct";
+import {LambdaExpression} from "../expression/lambda-expression";
 
 // todo add support for all statements that support rest and spread operators as wel like so [...args]
-export declare type ArrayElement = AnyExpression | AnyNotation | FunctionScope ;
+export declare type ArrayElement = AnyExpression | AnyNotation | FunctionScope | Statement | LambdaExpression;
 
 export class ArrayNotation extends Notation<Array<ArrayElement>>implements Codeable {
   constructor(parent: Scope, value: Array<ArrayElement>, attribute: ExpressionAttribute) {

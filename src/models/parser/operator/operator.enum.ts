@@ -20,7 +20,7 @@ export enum Operator {
   REMAINDER = '%',
   EXPONENTIAL = '**',
 
-  // Relational Operators
+  // Relaretional Operators
   IN = 'in',
   INSTANCEOF = 'instanceof',
   LESS_THAN = '<',

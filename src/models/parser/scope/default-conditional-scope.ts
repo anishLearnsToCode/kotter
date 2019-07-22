@@ -6,8 +6,8 @@ import {ReservedKeywords} from "../../reserved-keywords.enum";
 import {Delimiter} from "../delimiter.enum";
 
 export class DefaultConditionalScope extends ConditionalScope implements Codeable {
-  constructor(parent: Scope, body: Array<Construct>, condition: string) {
-    super(parent, body, condition);
+  constructor(parent: Scope, body: Array<Construct>) {
+    super(parent, body, '');
   }
 
   code(): string {

@@ -1,5 +1,3 @@
-import {Construct} from "../construct";
-import {Codeable} from "../../codeable";
 import {ConditionalScope} from "../scope/conditional.scope";
 import {Scope} from "../scope/scope.construct";
 import {IfConditionalScope} from "../scope/if-conditional-scope";

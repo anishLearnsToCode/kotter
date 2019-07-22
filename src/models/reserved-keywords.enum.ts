@@ -12,6 +12,7 @@ export enum ReservedKeywords {
   THROW = 'throw',
 
   IMPORT = 'import',
+  EXPORT = 'export',
   NEW = 'new',
   CLASS = 'class',
   EXTENDS = 'extends',

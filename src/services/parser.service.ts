@@ -43,6 +43,14 @@ import {
 import {PairCodeable} from "../models/common/PairCodeable";
 import {AssignmentOperator} from "../models/parser/operator/assignment-operator.enum";
 import {GeneratorFunctionScope} from "../models/parser/scope/generator-function-scope";
+import {IfElseBlock} from "../models/parser/block/if-else-block.construct";
+import {ConditionalScope} from "../models/parser/scope/conditional.scope";
+import {IfConditionalScope} from "../models/parser/scope/if-conditional-scope";
+import {ElseIfConditionalScope} from "../models/parser/scope/else-if-conditional-scope";
+import {ElseCondition} from "../models/parser/scope/else-condition";
+import {DefaultConditionalScope} from "../models/parser/scope/default-conditional-scope";
+import {CaseConditionalScope} from "../models/parser/scope/CaseConditionalScope";
+import {SwitchBlock} from "../models/parser/block/switch-block";
 
 export class ParserService {
   private static serviceInstance = new ParserService();
@@ -161,6 +169,13 @@ export class ParserService {
 
   private readonly DIGITS: Set<number> = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 0]);
 
+  private readonly STATEMENT_TOKENS = new Set([
+    ReservedKeywords.RETURN,
+    ReservedKeywords.THROW,
+    ReservedKeywords.IMPORT,
+    ReservedKeywords.EXPORT
+  ]);
+
   private readonly CARRIAGE_RETURN: string = '\n';
   private readonly WHITE_SPACE: string = ' ';
 
@@ -175,7 +190,6 @@ export class ParserService {
    * @return A valid Expression of above given types
    */
   public fromExpression(expression: string, parent: Scope): AnyExpression {
-    // if has attribute
     const periodAttributeDelimiterIndex = this.getFirstSymbolPositionAtTopLevel(expression, Delimiter.PERIOD);
 
     if (periodAttributeDelimiterIndex !== -1) {
@@ -250,16 +264,35 @@ export class ParserService {
       return this.fromNumberNotation(expression, parent);
     }
 
-    return this.fromStatementOrExpression(expression, parent) as ArrayIndex;
+    return this.fromStatementOrExpressionOrNotationOrAssignment(expression, parent) as ArrayIndex;
   }
 
-  private fromStatementOrExpression(expression: string, parent: Scope): Statement | AnyExpression | AssignmentExpression | AnyNotation {
+  private fromStatementOrExpressionOrNotationOrAssignment(expression: string, parent: Scope): Statement | AnyExpression | AssignmentExpression | AnyNotation {
     const tokens = this.getTokensFromStatement(expression);
-    if (this.tokensContainsOperator(tokens)) {
+    if (this.containsOperatorsOrStatementOperators(tokens)) {
       return this.fromStatement(tokens, parent);
     }
 
     return this.fromExpression(expression, parent);
+  }
+
+  private containsOperatorsOrStatementOperators(tokens: Array<string>): boolean {
+    return this.tokensContainsOperator(tokens) ||
+      this.tokensContainsStatementOperators(tokens);
+  }
+
+  private tokensContainsStatementOperators(tokens: Array<string>): boolean {
+    for (const token of tokens) {
+      if (this.isStatementOperator(token)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private isStatementOperator (token: string): boolean {
+    return this.STATEMENT_TOKENS.has(token as ReservedKeywords);
   }
 
   /***
@@ -533,6 +566,16 @@ export class ParserService {
     return new AssignmentExpression(parent, target, value, assignmentOperator);
   }
 
+  private getAllPositionsAtTopLevel(expression: string, symbol: AnySymbol): Array<number> {
+    const result: Array<number> = [];
+    const firstSymbolIndex = this.getFirstSymbolPositionAtTopLevel(expression, symbol);
+    result.push(
+      firstSymbolIndex,
+      ...this.getAllPositionsAtTopLevel(expression.substring(firstSymbolIndex + 1).trim(), symbol)
+    );
+    return result;
+  }
+
   private getFirstSymbolPositionAtTopLevel(expression: string, symbol: AnySymbol): number {
     let expectedStack = 0;
     if (this.isBracket(symbol)) {
@@ -729,7 +772,7 @@ export class ParserService {
     const parametersList = this.getCommaSeparatedConstructs(commaSeparatedParameters);
     const parameters: Array<VariableExpression> = this.fromVariableExpressionElements(parametersList, parent);
     const statementExpression = expression.substring(lambdaOperatorIndex + 2);
-    const statement = this.fromStatementOrExpression(statementExpression, parent);
+    const statement = this.fromStatementOrExpressionOrNotationOrAssignment(statementExpression, parent);
 
     return new LambdaExpression(parent, parameters, statement);
   }
@@ -760,7 +803,7 @@ export class ParserService {
     return false;
   }
 
-  private fromExpressionOrNotationOrFunctionScope(expression: string, parent: Scope): ObjectAttributeValue {
+  private fromExpressionOrNotationOrFunctionScope(expression: string, parent: Scope): AnyExpression | AnyNotation | FunctionScope {
     if (this.isAnyFunctionScope(expression)) {
       return this.fromAnyFunctionScope(expression, parent);
     }
@@ -836,7 +879,10 @@ export class ParserService {
   }
 
   private fromScopeBody(expression: string, parent: Scope): Array<Construct> {
-
+    const constructs: Array<Construct> = [];
+    for (let index = 0 ; index < expression.length ; index++) {
+      
+    }
   }
 
   private getParameters(parameters: Array<string>, parent: Scope): Array<FunctionParameter> {
@@ -1072,12 +1118,13 @@ export class ParserService {
     return new FunctionInvocationExpression(parent, target, attribute, args);
   }
 
-  private fromExpressionOrFunctionScopeElements(args: Array<string>, parent: Scope): Array<AnyNotation>
+  private fromExpressionOrFunctionScopeElements(args: Array<string>, parent: Scope): Array<AnyExpression | FunctionScope> {
+    const result: Array<AnyExpression | FunctionScope> = [];
+    for(const arg of args) {
+      result.push(this.fromExpressionOrFunctionScope(arg, parent));
+    }
 
-  private getArgumentsFromFunctionInvocation(expression: string, parent: Scope, leftBracketPosition: number): Array<FunctionArgument> {
-    const rightBracketPosition = this.partnerBracePosition(expression, leftBracketPosition);
-    const argsExpression = expression.substring(leftBracketPosition, rightBracketPosition);
-    return this.getMethodArguments(argsExpression, parent);
+    return result;
   }
 
   private fromExpressionOrFunctionScope(expression: string, parent: Scope): AnyExpression | FunctionScope {
@@ -1208,10 +1255,23 @@ export class ParserService {
     return -1;
   }
 
-  // todo really really todo
   public getMethodArguments(args: Array<string>, parent: Scope): Array<FunctionArgument> {
     const result: Array<FunctionArgument> = [];
+    for (const arg of args) {
+      result.push(this.fromStatementOrFunctionScopeOrLambda(arg, parent) as FunctionArgument);
+    }
+
     return result;
+  }
+
+  private fromStatementOrFunctionScopeOrLambda(expression: string, parent: Scope):
+    Statement | AnyExpression | AnyNotation | FunctionScope | AssignmentExpression {
+
+    if (this.isAnyFunctionScope(expression)) {
+      return this.fromFunctionScope(expression, parent);
+    }
+
+    return this.fromStatementOrExpressionOrNotationOrAssignment(expression, parent);
   }
 
   private fromExpressionOrNotation(expression: string, parent: Scope): AnyExpression | AnyNotation {
@@ -1304,10 +1364,36 @@ export class ParserService {
 
     const commaSeparatedElements = expression.substring(1, expression.length - 1);
     const elementExpressions: Array<string> = this.getCommaSeparatedConstructs(commaSeparatedElements);
-    const arrayElements: Array<ArrayElement> = this.fromExpressionOrNotationOrFunctionScopeElements(elementExpressions, parent);
+    const arrayElements: Array<ArrayElement> = this.fromArrayElements(elementExpressions, parent);
     const attribute = attributeExpression ? this.fromExpressionAttribute(attributeExpression, parent) : null ;
 
     return new ArrayNotation(parent, arrayElements, attribute);
+  }
+
+  /***
+   * @return can be AnyExpression | AnyNotation | FunctionScope | Statement | LambdaExpression
+   * @param elements
+   * @param parent
+   */
+  private fromArrayElements(elements: Array<string>, parent: Scope): Array<ArrayElement> {
+    const result: Array<ArrayElement> = [];
+    for (const element of elements) {
+      result.push(this.fromArrayElement(element, parent));
+    }
+
+    return result;
+  }
+
+  private fromArrayElement(expression: string, parent: Scope): ArrayElement {
+    if (this.isAnyFunctionScope(expression)) {
+      return this.fromFunctionScope(expression, parent);
+    }
+
+    if (this.isLambdaExpression(expression)) {
+      return this.fromLambdaExpression(expression, parent);
+    }
+
+    return this.fromStatementOrExpressionOrNotationOrAssignment(expression, parent) as ArrayElement ;
   }
 
   private fromExpressionOrNotationOrFunctionScopeElements(expressions: string[], parent: Scope):
@@ -1317,6 +1403,196 @@ export class ParserService {
     for (const expression of expressions) {
       result.push(this.fromExpressionOrNotationOrFunctionScope(expression, parent));
     }
+
+    return result;
+  }
+
+  private fromSwitchBlock(expression: string, parent: Scope): SwitchBlock {
+    const leftBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_BRACE);
+    const rightBraceIndex = this.getPartnerBracePosition(expression, leftBraceIndex);
+    const switchBlock = new
+      SwitchBlock(parent, [], expression.substring(leftBraceIndex + 1, rightBraceIndex).trim());
+
+    const leftCurlyBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_CURLY_BRACE);
+    const rightCurlyBraceIndex = this.getPartnerBracePosition(expression, leftCurlyBraceIndex);
+    const bodyExpression = expression.substring(leftCurlyBraceIndex + 1, rightCurlyBraceIndex).trim();
+    const conditionalExpressions = this.getCaseAndDefaultConditionalExpressions(bodyExpression);
+    switchBlock.conditionalScopes = this.fromConditionalScopeElements(conditionalExpressions, parent);
+    return switchBlock;
+  }
+
+  private getCaseAndDefaultConditionalExpressions(expression: string): Array<string> {
+    const colonIndexes: Array<number> = this.getAllPositionsAtTopLevel(expression, Delimiter.COLON);
+    const result: Array<string> = [];
+
+    if (colonIndexes.length < 2) {
+      result.push(expression);
+      return result;
+    }
+
+    for (let index = 0, startIndex = 0, endIndex; index < colonIndexes.length ;
+         result.push(expression.substring(startIndex, endIndex + 1).trim()), index++, startIndex = endIndex + 1) {
+      if (index === colonIndexes.length - 1) {
+        endIndex = expression.length - 1;
+        continue;
+      }
+
+      endIndex = this.getPreviousWordStartIndex(expression, colonIndexes[index + 1]) - 1;
+    }
+
+    return result;
+  }
+
+  private getPreviousWordStartIndex(expression: string, from: number): number {
+    for (let index = from, encounteredWhitespace = !this.isWhitespaceCharacter(expression.charAt(from - 1)) ; index >= 0 ; index--) {
+      const character = expression.charAt(index);
+
+      if (this.isWhitespaceCharacter(character)) {
+        if (encounteredWhitespace) {
+          return index + 1;
+        }
+        encounteredWhitespace = true;
+      }
+    }
+
+    return -1;
+  }
+
+  private fromIfElseBlock(expression: string, parent: Scope): IfElseBlock {
+    const conditionalScopesExpressions: string[] = this.getScopeExpression(expression);
+    const conditionalScopes = this.fromConditionalScopeElements(conditionalScopesExpressions, parent);
+    return new IfElseBlock(parent, conditionalScopes);
+  }
+
+  private fromConditionalScopeElements(conditionalScopeExpressions: Array<string>, parent: Scope): Array<ConditionalScope> {
+    let result: Array<ConditionalScope> = [];
+    for (const conditionalScopeExpression of conditionalScopeExpressions) {
+      result.push(this.fromConditionalScope(conditionalScopeExpression, parent));
+    }
+    return result;
+  }
+
+  /***
+   * @return Any Conditional Scope i.e IfScope | IfElse | Else and also CaseScope and DefaultScope
+   * @param expression
+   * @param parent
+   */
+  private fromConditionalScope(expression: string, parent: Scope): ConditionalScope {
+    if (this.isIfElseOrIfElseScope(expression)) {
+      return this.fromIfElseOrIfElseExpression(expression, parent);
+    }
+
+    return this.fromDefaultOrCaseConditionalScope(expression, parent);
+  }
+
+  private fromIfElseOrIfElseExpression(expression: string, parent: Scope): IfConditionalScope | ElseIfConditionalScope | ElseCondition {
+    if (this.isIfScopeCondition(expression)) {
+      return this.fromIfScopeExpression(expression, parent);
+    } else if (this.isElseIfScopeExpression(expression)) {
+      return this.fromElseIfScope(expression, parent);
+    }
+
+    return this.fromElseScope(expression, parent);
+  }
+
+  private fromElseScope (expression: string, parent: Scope): ElseCondition {
+    const elseScope = new IfConditionalScope(parent, [], '');
+    const leftCurlyBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_CURLY_BRACE);
+    const rightCurlyBraceIndex = this.getPartnerBracePosition(expression, leftCurlyBraceIndex);
+    elseScope.body = this.fromScopeBody(expression.substring(leftCurlyBraceIndex + 1, rightCurlyBraceIndex).trim(), elseScope);
+
+    return elseScope;
+  }
+
+  private fromElseIfScope(expression: string, parent: Scope): ElseIfConditionalScope {
+    const elseIfScope = new ElseIfConditionalScope(parent, [], '');
+    const leftBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_BRACE);
+    const rightBraceIndex = this.getPartnerBracePosition(expression, leftBraceIndex);
+    elseIfScope.condition = expression.substring(leftBraceIndex + 1, rightBraceIndex).trim();
+
+    const leftCurlyBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_CURLY_BRACE);
+    const rightCurlyBraceIndex = this.getPartnerBracePosition(expression, leftCurlyBraceIndex);
+    elseIfScope.body = this.fromScopeBody(expression.substring(leftCurlyBraceIndex + 1, rightCurlyBraceIndex).trim(), elseIfScope);
+
+    return elseIfScope;
+  }
+
+  private fromIfScopeExpression(expression: string, parent: Scope): IfConditionalScope {
+    const ifScope = new IfConditionalScope(parent, [], '');
+    const leftBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_BRACE);
+    const rightBraceIndex = this.getPartnerBracePosition(expression, leftBraceIndex);
+    ifScope.condition = expression.substring(leftBraceIndex + 1, rightBraceIndex).trim();
+
+    const leftCurlyBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_CURLY_BRACE);
+    const rightCurlyBraceIndex = this.getPartnerBracePosition(expression, leftCurlyBraceIndex);
+    ifScope.body = this.fromScopeBody(expression.substring(leftCurlyBraceIndex + 1, rightCurlyBraceIndex).trim(), ifScope);
+
+    return ifScope;
+  }
+
+  private fromDefaultOrCaseConditionalScope(expression: string, parent: Scope): DefaultConditionalScope | CaseConditionalScope {
+    if (this.isCaseConditionScope(expression)) {
+      return this.fromCaseConditionalScope(expression, parent);
+    }
+
+    return this.fromDefaultConditionalScope(expression, parent);
+  }
+
+  private fromCaseConditionalScope(expression: string, parent: Scope): CaseConditionalScope {
+    const caseScope = new CaseConditionalScope(parent, [], '');
+    const colonIndex = this.getFirstSymbolPositionAtTopLevel(expression, Delimiter.COLON);
+    caseScope.condition = expression.substring(ReservedKeywords.CASE.length, colonIndex).trim();
+    caseScope.body = this.fromScopeBody(expression.substring(colonIndex + 1).trim(), caseScope);
+    return caseScope;
+  }
+
+  private fromDefaultConditionalScope(expression: string, parent: Scope): DefaultConditionalScope {
+    const defaultCase = new DefaultConditionalScope(parent, []);
+    const colonIndex = this.getFirstSymbolPositionAtTopLevel(expression, Delimiter.COLON);
+    defaultCase.body = this.fromScopeBody(expression.substring(colonIndex + 1).trim(), defaultCase);
+    return defaultCase;
+  }
+
+  private isCaseConditionScope(expression: string): boolean {
+    return expression.substring(0, ReservedKeywords.CASE.length) === ReservedKeywords.CASE ;
+  }
+
+  private isIfElseOrIfElseScope(expression: string): boolean {
+    return this.isIfScopeCondition(expression)
+      || this.isElseIfScopeExpression(expression)
+      || this.isElseScopeCondition(expression);
+  }
+
+  private isIfScopeCondition(expression: string): boolean {
+    return expression.substring(0, ReservedKeywords.IF.length) === ReservedKeywords.IF;
+  }
+
+  private isElseScopeCondition(expression: string): boolean {
+    return expression.substring(0, ReservedKeywords.ELSE.length) === ReservedKeywords.ELSE;
+  }
+
+  private isElseIfScopeExpression(expression: string): boolean {
+    return expression.substring(0, ReservedKeywords.ELSE_IF.length) === ReservedKeywords.ELSE_IF;
+  }
+
+  /***
+   * @param expression Recieves a string expression without any \n\r characters and also
+   * of the form [any name | any expression] { //scope } [name  expression] { // scope}
+   * @return a string array of all of these scope expressions  as
+   * [ '[name | expression]' { // scope }' , .... ]
+   */
+  private getScopeExpression(expression: string): Array<string> {
+    const result: Array<string> = [];
+    const firstLeftCurlyBrace = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_CURLY_BRACE);
+    if (firstLeftCurlyBrace === -1) {
+      return result;
+    }
+
+    const rightCurlyBrace = this.getPartnerBracePosition(expression, firstLeftCurlyBrace);
+    result.push(
+      expression.substring(rightCurlyBrace + 1),
+      ...this.getScopeExpression(expression.substring(rightCurlyBrace + 1).trim())
+    );
 
     return result;
   }
@@ -1335,10 +1611,6 @@ export class ParserService {
     );
 
     return result;
-  }
-
-  private fromExpressionOrNotationTokens(tokens: Array<string>, parent: Scope): AnyExpression | AnyNotation {
-
   }
 
   /***

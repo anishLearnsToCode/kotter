@@ -7,7 +7,10 @@ import {CaseConditionalScope} from "../scope/CaseConditionalScope";
 import {DefaultConditionalScope} from "../scope/default-conditional-scope";
 
 export class SwitchBlock extends Block<CaseConditionalScope | DefaultConditionalScope> {
-  constructor(parent: Scope, conditionalScopes: Array<CaseConditionalScope | DefaultConditionalScope>) {
+  condition: string;
+
+  constructor(parent: Scope, conditionalScopes: Array<CaseConditionalScope | DefaultConditionalScope>, condition: string) {
     super(parent, conditionalScopes);
+    this.condition = condition;
   }
 }
