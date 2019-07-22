@@ -51,6 +51,13 @@ import {ElseCondition} from "../models/parser/scope/else-condition";
 import {DefaultConditionalScope} from "../models/parser/scope/default-conditional-scope";
 import {CaseConditionalScope} from "../models/parser/scope/CaseConditionalScope";
 import {SwitchBlock} from "../models/parser/block/switch-block";
+import {TryCatchBlock} from "../models/parser/block/try-cach-block.construct";
+import {TryScope} from "../models/parser/scope/try.scope";
+import {CatchScope} from "../models/parser/scope/catch.scope";
+import {ForLoop} from "../models/parser/scope/for.loop";
+import {ForEachLoopScope} from "../models/parser/scope/for-each-loop-scope";
+import {DoWhileLoopScope} from "../models/parser/scope/do-while-loop-scope";
+import {WhileLoopScope} from "../models/parser/scope/while-loop-scope";
 
 export class ParserService {
   private static serviceInstance = new ParserService();
@@ -267,7 +274,9 @@ export class ParserService {
     return this.fromStatementOrExpressionOrNotationOrAssignment(expression, parent) as ArrayIndex;
   }
 
-  private fromStatementOrExpressionOrNotationOrAssignment(expression: string, parent: Scope): Statement | AnyExpression | AssignmentExpression | AnyNotation {
+  private fromStatementOrExpressionOrNotationOrAssignment(expression: string, parent: Scope): Statement |
+    AnyExpression | AssignmentExpression | AnyNotation {
+
     const tokens = this.getTokensFromStatement(expression);
     if (this.containsOperatorsOrStatementOperators(tokens)) {
       return this.fromStatement(tokens, parent);
@@ -881,7 +890,7 @@ export class ParserService {
   private fromScopeBody(expression: string, parent: Scope): Array<Construct> {
     const constructs: Array<Construct> = [];
     for (let index = 0 ; index < expression.length ; index++) {
-      
+
     }
   }
 
@@ -1458,6 +1467,53 @@ export class ParserService {
     return -1;
   }
 
+  private fromTryCatchBlock(expression: string, parent: Scope): TryCatchBlock {
+    const tryCatchBlock = new TryCatchBlock(parent, []);
+    const handlingExpressions = this.getScopeExpression(expression);
+    tryCatchBlock.conditionalScopes = this.fromTryOrCatchExpressionElements(handlingExpressions, parent);
+    return tryCatchBlock;
+  }
+
+  private fromTryOrCatchExpressionElements(expressions: Array<string>, parent: Scope): Array<TryScope | CatchScope> {
+    const result: Array<TryScope | CatchScope> = [];
+    for(const expression of expressions) {
+      result.push(this.fromTryOrCatchScope(expression, parent));
+    }
+    return result;
+  }
+
+  private fromTryOrCatchScope(expression: string, parent: Scope): TryScope | CatchScope {
+    if (this.isTryScope(expression)) {
+      return this.fromTryScope(expression, parent);
+    }
+
+    return this.fromCatchScope(expression, parent);
+  }
+
+  private isTryScope(expression: string): boolean {
+    return expression.substring(0, ReservedKeywords.TRY.length) === ReservedKeywords.TRY;
+  }
+
+  private fromTryScope(expression: string, parent: Scope): TryScope {
+    const tryScope = new TryScope(parent, []);
+    const leftBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.RIGHT_CURLY_BRACE);
+    const rightCurlyBraceIndex = this.getPartnerBracePosition(expression, leftBraceIndex);
+    tryScope.body = this.fromScopeBody(expression.substring(leftBraceIndex + 1, rightCurlyBraceIndex).trim(), tryScope);
+    return tryScope;
+  }
+
+  private fromCatchScope(expression: string, parent: Scope): CatchScope {
+    const catchScope = new CatchScope(parent, [], '');
+    const leftBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_BRACE);
+    const rightBraceIndex = this.getPartnerBracePosition(expression, leftBraceIndex);
+    catchScope.condition = expression.substring(leftBraceIndex + 1, rightBraceIndex).trim();
+
+    const leftCurlyBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_CURLY_BRACE);
+    const rightCurlyBraceIndex = this.getPartnerBracePosition(expression, leftCurlyBraceIndex);
+    catchScope.body = this.fromScopeBody(expression.substring(leftCurlyBraceIndex + 1, rightBraceIndex).trim(), catchScope);
+    return catchScope;
+  }
+
   private fromIfElseBlock(expression: string, parent: Scope): IfElseBlock {
     const conditionalScopesExpressions: string[] = this.getScopeExpression(expression);
     const conditionalScopes = this.fromConditionalScopeElements(conditionalScopesExpressions, parent);
@@ -1478,14 +1534,14 @@ export class ParserService {
    * @param parent
    */
   private fromConditionalScope(expression: string, parent: Scope): ConditionalScope {
-    if (this.isIfElseOrIfElseScope(expression)) {
-      return this.fromIfElseOrIfElseExpression(expression, parent);
+    if (this.isIfOrElseOrIfElseScope(expression)) {
+      return this.fromIfOrElseOrIfElseExpression(expression, parent);
     }
 
     return this.fromDefaultOrCaseConditionalScope(expression, parent);
   }
 
-  private fromIfElseOrIfElseExpression(expression: string, parent: Scope): IfConditionalScope | ElseIfConditionalScope | ElseCondition {
+  private fromIfOrElseOrIfElseExpression(expression: string, parent: Scope): IfConditionalScope | ElseIfConditionalScope | ElseCondition {
     if (this.isIfScopeCondition(expression)) {
       return this.fromIfScopeExpression(expression, parent);
     } else if (this.isElseIfScopeExpression(expression)) {
@@ -1557,7 +1613,7 @@ export class ParserService {
     return expression.substring(0, ReservedKeywords.CASE.length) === ReservedKeywords.CASE ;
   }
 
-  private isIfElseOrIfElseScope(expression: string): boolean {
+  private isIfOrElseOrIfElseScope(expression: string): boolean {
     return this.isIfScopeCondition(expression)
       || this.isElseIfScopeExpression(expression)
       || this.isElseScopeCondition(expression);
@@ -1582,19 +1638,68 @@ export class ParserService {
    * [ '[name | expression]' { // scope }' , .... ]
    */
   private getScopeExpression(expression: string): Array<string> {
-    const result: Array<string> = [];
     const firstLeftCurlyBrace = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_CURLY_BRACE);
     if (firstLeftCurlyBrace === -1) {
-      return result;
+      return [];
     }
 
+    const result: Array<string> = [];
     const rightCurlyBrace = this.getPartnerBracePosition(expression, firstLeftCurlyBrace);
     result.push(
-      expression.substring(rightCurlyBrace + 1),
+      expression.substring(0, rightCurlyBrace + 1),
       ...this.getScopeExpression(expression.substring(rightCurlyBrace + 1).trim())
     );
 
     return result;
+  }
+
+  /***
+   *
+   * @param expression It has already been determined that the scope is either for or
+   * foreach and hence must start with a for
+   * @param parent
+   */
+  private fromForOrForeachLoopScope(expression: string, parent: Scope): ForLoop | ForEachLoopScope {
+    if (this.isForLoopScope(expression)) {
+      return this.fromForLoopScope(expression, parent);
+    }
+
+    return this.fromForeachLoopScope(expression, parent);
+  }
+
+  private isForLoopScope(expression: string): boolean {
+    const leftBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_BRACE);
+    const rightBraceIndex = this.getPartnerBracePosition(expression, leftBraceIndex);
+    const argsExpression = expression.substring(leftBraceIndex + 1, rightBraceIndex);
+    return this.getFirstSymbolPositionAtTopLevel(argsExpression, Delimiter.SEMI_COLON) !== -1 ;
+  }
+
+  private fromForeachLoopScope(expression: string, parent: Scope): ForEachLoopScope {
+    const leftBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_BRACE);
+    const rightBraceIndex = this.getPartnerBracePosition(expression, leftBraceIndex);
+    const foreachLoop = new ForEachLoopScope(parent,
+      [],
+      expression.substring(leftBraceIndex + 1, rightBraceIndex).trim()
+    );
+
+    const leftCurlyBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_CURLY_BRACE);
+    const rightCurlyBraceIndex = this.partnerBracePosition(expression, leftCurlyBraceIndex);
+    foreachLoop.body = this.fromScopeBody(expression.substring(leftCurlyBraceIndex + 1, rightCurlyBraceIndex).trim(),
+      foreachLoop);
+    return foreachLoop;
+  }
+
+  private fromForLoopScope(expression: string, parent: Scope): ForLoop {
+
+  }
+
+  private fromDoWhileLoopScope(expression: string, parent: Scope): DoWhileLoopScope {
+    const leftCurlyBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_CURLY_BRACE);
+    const rightCurlyBraceIndex = 
+  }
+
+  private fromWhileLoopScope(expression: string, parent: Scope): WhileLoopScope {
+
   }
 
   private getCommaSeparatedConstructs(expression: string): Array<string> {
