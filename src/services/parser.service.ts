@@ -12,7 +12,6 @@ import {
   AssignmentExpressionTargetType,
   AssignmentExpressionValueType
 } from "../models/parser/instantiation/assignment-expression";
-import {Symbol} from "../models/parser/symbol.enum";
 import {
   ArrayIndex,
   ArrayIndexExpression,
@@ -497,24 +496,8 @@ export class ParserService {
     return this.fromExpressionOrNotation(expression, parent);
   }
 
-  // TODO: Implement logic for whether a statement is an assignment expression
   private isAssignmentExpression(expression: string): boolean {
-    for (let index = 0, bracketStack = 0 ; index < expression.length ; index++) {
-      const character = expression.charAt(index);
-      if (this.isLeftBracket(character)) {
-        bracketStack++;
-      }
-
-      if (this.isRightBracket(character)) {
-        bracketStack--;
-      }
-
-      if (bracketStack === 0 && character === Symbol.EQUAL) {
-        return true;
-      }
-    }
-
-    return false;
+    return this.getFirstSymbolPositionAtTopLevel(expression,Operator.EQUALITY) !== -1;
   }
 
   /***
@@ -810,36 +793,6 @@ export class ParserService {
     }
 
     return false;
-  }
-
-  private indexOfPatternInUnNested(expression: string, pattern: string): number {
-    for (let index = 0, bracketStack = 0, stringLiteral = null ; index < expression.length ; index++) {
-      const character = expression.charAt(index);
-      if (stringLiteral && stringLiteral === character) {
-        stringLiteral = null;
-        continue;
-      }
-
-      if (stringLiteral) {
-        continue;
-      }
-
-      if (this.isLeftBracket(character)) {
-        bracketStack++;
-      }
-
-      if (this.isRightBracket(character)) {
-        bracketStack--;
-      }
-
-      if (bracketStack === 0 && character === pattern.charAt(0)) {
-        if(pattern === expression.substr(index, pattern.length)) {
-          return index;
-        }
-      }
-    }
-
-    return -1;
   }
 
   private fromAnyFunctionScope(expression: string, parent: Scope): FunctionScope {

@@ -2,8 +2,8 @@ import {Scope} from "./scope.construct";
 import {FunctionParameter, FunctionScope} from "./function.scope";
 import {Codeable} from "../../codeable";
 import {Construct} from "../construct";
-import {Operator} from "../operator/operator.enum";
 import {Bracket} from "../bracket.enum";
+import {Delimiter} from "../delimiter.enum";
 
 export class AnonymousFunctionScope extends FunctionScope implements Codeable {
   constructor(parent: Scope, body: Array<Construct>, parameters: Array<FunctionParameter>) {
@@ -14,7 +14,7 @@ export class AnonymousFunctionScope extends FunctionScope implements Codeable {
     return Bracket.LEFT_BRACE + ' '
       + this.representationOfParameters() + ' '
       + Bracket.RIGHT_BRACE + ' '
-      + Operator.LAMBDA + ' '
+      + Delimiter.LAMBDA + ' '
       + super.code();
   }
 }
