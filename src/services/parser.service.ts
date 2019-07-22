@@ -484,12 +484,11 @@ export class ParserService {
 
     return new GroupExpression(
       parent,
-      this.fromNotationOrExpressionOrAssignmentExpression(codeInsideBrackets, parent),
+      this.fromExpressionOrNotationOrFunctionScopeOrLambdaOrAssignment(codeInsideBrackets, parent) as GroupExpressionTargetType,
       attribute
     );
   }
 
-  // TODO: Implement for all Expression types and add support for notations
   private fromNotationOrExpressionOrAssignmentExpression(expression: string, parent: Scope): GroupExpressionTargetType {
     if (this.isAssignmentExpression(expression)) {
       return this.fromAssignmentExpression(expression, parent);
@@ -1047,7 +1046,7 @@ export class ParserService {
     const parameters = this.getParameters(parametersList, parent);
     const leftCurlyBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_CURLY_BRACE);
     const rightCurlyBraceIndex = this.getLastSymbolPositionAtTopLevel(expression, Bracket.RIGHT_CURLY_BRACE);
-    const bodyExpression = expression.substring(leftBraceIndex + 1, rightCurlyBraceIndex).trim();
+    const bodyExpression = expression.substring(leftCurlyBraceIndex + 1, rightCurlyBraceIndex).trim();
     const generatorFunction = new GeneratorFunctionScope(parent, [], parameters, name);
     generatorFunction.body = this.fromScopeBody(bodyExpression, generatorFunction);
     return generatorFunction;
@@ -1497,7 +1496,7 @@ export class ParserService {
   }
 
   public isOperator(token: string): boolean {
-
+    return this.OPERATORS.has(token as Operator);
   }
 
   public removeAllLineBreaks(expression: string): string {
