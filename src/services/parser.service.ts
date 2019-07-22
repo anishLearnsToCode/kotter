@@ -540,15 +540,22 @@ export class ParserService {
 
   /***
    *
-   * @param tokens The string tokens received here must eb exactly 3 in number one target expression,
+   * @param tokens The string tokens received here must be exactly 3 in number one target expression,
    * one EQUALS delimiter operator token (or some other assignment type operator) and one value expression
    * @param parent The parent scope of the expression
    */
   public fromAssignmentExpressionTokens(tokens: Array<string>, parent: Scope): AssignmentExpression {
-
+    const target = this.fromExpressionOrDeconstructedExpression(tokens[0], parent);
+    const assignmentOperator = tokens[1] as AssignmentOperator;
+    const value = this.fromExpressionOrNotationOrFunctionScopeOrLambdaOrAssignment(tokens[2], parent);
+    return new AssignmentExpression(parent, target, value, assignmentOperator);
   }
 
   private getFirstSymbolPositionAtTopLevel(expression: string, symbol: AnySymbol): number {
+    let expectedStack = 0;
+    if (this.isBracket(symbol)) {
+      expectedStack = this.isRightBracket(symbol) ? -1 : 1;
+    }
     for (let bracketStack = 0, stringLiteralChar = null, index = 0 ; index < expression.length ; index++) {
       const character = expression.charAt(index);
 
@@ -578,7 +585,7 @@ export class ParserService {
         bracketStack--;
       }
 
-      if (bracketStack === 0 && character === symbol) {
+      if (bracketStack === expectedStack && character === symbol) {
         return  index;
       }
     }
@@ -890,7 +897,7 @@ export class ParserService {
 
   private fromFunctionParameter(parameter: string, parent: Scope): FunctionParameter {
     if (this.isAssignmentExpression(parameter)) {
-      return this.fromAssignmentExression(parameter, parent);
+      return this.fromAssignmentExpression(parameter, parent);
     }
 
     return this.fromVariableOrDeconstructedExpression(parameter, parent);
@@ -998,7 +1005,7 @@ export class ParserService {
     }
 
     const target = this.fromExpressionOrDeconstructedExpression(targetExpression, parent);
-    const value = this.fromExpressionOrNotationOrFunctionScopeOrLambda(valueExpression, parent);
+    const value = this.fromExpressionOrNotationOrFunctionScopeOrLambdaOrAssignment(valueExpression, parent);
     return new AssignmentExpression(parent, target, value, assignmentOperator);
   }
 
