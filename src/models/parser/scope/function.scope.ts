@@ -8,7 +8,7 @@ import {AnyDeconstructedExpression} from "../instantiation/any-deconstructed-exp
 export declare type FunctionParameter = VariableExpression | AssignmentExpression | AnyDeconstructedExpression ;
 
 export abstract class FunctionScope extends Scope {
-  readonly parameters: Array<FunctionParameter>;
+  parameters: Array<FunctionParameter>;
 
   protected constructor(parent: Scope, body: Array<Construct>, parameters: Array<FunctionParameter>) {
     super(parent, body);

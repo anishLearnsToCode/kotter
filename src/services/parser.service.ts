@@ -1040,18 +1040,35 @@ export class ParserService {
     const parameters = this.getParameters(parametersList, parent);
     const leftCurlyBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_CURLY_BRACE);
     const rightCurlyBraceIndex = this.getLastSymbolPositionAtTopLevel(expression, Bracket.RIGHT_CURLY_BRACE);
-    const bodyExpression = expression.substring(leftBraceIndex + 1, rightCurlyBraceIndex);
+    const bodyExpression = expression.substring(leftBraceIndex + 1, rightCurlyBraceIndex).trim();
     const generatorFunction = new GeneratorFunctionScope(parent, [], parameters, name);
     generatorFunction.body = this.fromScopeBody(bodyExpression, generatorFunction);
     return generatorFunction;
   }
 
   private fromAnonymousFunctionScope(expression: string, parent: Scope): AnonymousFunctionScope {
-    
+    const lambdaIndex = this.getFirstSymbolPositionAtTopLevel(expression, Operator.EQUALITY) ;
+    let commaSeparatedParameters;
+    if (expression.charAt(0) === Bracket.LEFT_BRACE) {
+      const rightBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.RIGHT_BRACE);
+      commaSeparatedParameters = expression.substring(1, rightBraceIndex).trim();
+    } else {
+      commaSeparatedParameters = expression.substring(0, lambdaIndex).trim();
+    }
+
+    const parametersList = this.getCommaSeparatedConstructs(commaSeparatedParameters);
+    const anonymousFunction = new AnonymousFunctionScope(parent, [], []);
+    anonymousFunction.parameters = this.getParameters(parametersList, anonymousFunction);
+    const leftCurlyBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_CURLY_BRACE);
+    const rightCurlyBraceIndex = this.getLastSymbolPositionAtTopLevel(expression, Bracket.RIGHT_CURLY_BRACE);
+    const bodyExpression = expression.substring(leftCurlyBraceIndex + 1, rightCurlyBraceIndex);
+    anonymousFunction.body = this.fromScopeBody(bodyExpression, anonymousFunction);
   }
 
-  private fromScope(expression: String, parent: Scope): Scope {
-
+  private fromScope(expression: string, parent: Scope): Scope {
+    const scope = new Scope(parent, []);
+    scope.body = this.fromScopeBody(expression, scope);
+    return scope;
   }
 
 
