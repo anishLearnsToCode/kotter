@@ -13,9 +13,9 @@ export class FunctionInvocationExpression extends Expression<FunctionInvocationE
   args: Array<FunctionArgument> = [];
 
   constructor(parent: Scope, target: FunctionInvocationExpressionTarget,
-              value: ExpressionAttribute, args: Array<FunctionArgument>) {
+              attribute: ExpressionAttribute, args: Array<FunctionArgument>) {
 
-    super(parent, target, value);
+    super(parent, target, attribute);
     this.args = args;
   }
 

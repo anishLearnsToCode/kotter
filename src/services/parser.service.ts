@@ -970,7 +970,18 @@ export class ParserService {
   }
 
   private fromExpressionOrDeconstructedExpression(expression: string, parent: Scope): AssignmentExpressionTargetType {
+    if (this.isExpression(expression)) {
+      return this.fromExpression(expression, parent);
+    }
 
+    return this.fromDeconstructedExpression(expression, parent);
+  }
+
+  private isExpression(expression: string): boolean {
+    return this.isVariableExpression(expression) ||
+      this.isArrayIndexExpression(expression) ||
+      this.isGroupExpression(expression) ||
+      this.isFunctionInvocationExpression(expression) ;
   }
 
   private isAssignmentOperator(expression: string): boolean {
@@ -991,17 +1002,20 @@ export class ParserService {
   }
 
   private fromGeneratorFunctionScope(expression: string, parent: Scope): GeneratorFunctionScope {
+    const generatorFunction = new GeneratorFunctionScope(parent, [], [], '');
     const leftBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_BRACE);
     const rightBraceIndex = this.partnerBracePosition(expression, leftBraceIndex);
-    const name = expression.substring(ReservedKeywords.GENERATOR_FUNCTION.length, leftBraceIndex).trim();
+    generatorFunction.name = expression.substring(ReservedKeywords.GENERATOR_FUNCTION.length, leftBraceIndex).trim();
+
     const commaSeparatedParameters = expression.substring(leftBraceIndex + 1, rightBraceIndex).trim();
     const parametersList = this.getCommaSeparatedConstructs(commaSeparatedParameters);
-    const parameters = this.getParameters(parametersList, parent);
+    generatorFunction.parameters = this.getParameters(parametersList, generatorFunction);
+
     const leftCurlyBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_CURLY_BRACE);
     const rightCurlyBraceIndex = this.getLastSymbolPositionAtTopLevel(expression, Bracket.RIGHT_CURLY_BRACE);
     const bodyExpression = expression.substring(leftCurlyBraceIndex + 1, rightCurlyBraceIndex).trim();
-    const generatorFunction = new GeneratorFunctionScope(parent, [], parameters, name);
     generatorFunction.body = this.fromScopeBody(bodyExpression, generatorFunction);
+
     return generatorFunction;
   }
 
@@ -1022,6 +1036,7 @@ export class ParserService {
     const rightCurlyBraceIndex = this.getLastSymbolPositionAtTopLevel(expression, Bracket.RIGHT_CURLY_BRACE);
     const bodyExpression = expression.substring(leftCurlyBraceIndex + 1, rightCurlyBraceIndex);
     anonymousFunction.body = this.fromScopeBody(bodyExpression, anonymousFunction);
+    return anonymousFunction;
   }
 
   private fromScope(expression: string, parent: Scope): Scope {
@@ -1042,20 +1057,22 @@ export class ParserService {
    */
   public fromFunctionInvocationExpression(expression: string, parent: Scope): FunctionInvocationExpression {
     const periodDelimiterIndex = this.getFirstSymbolPositionAtTopLevel(expression, Delimiter.PERIOD);
+    const leftBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_BRACE);
+    const rightBraceIndex = this.getPartnerBracePosition(expression, leftBraceIndex);
+    const targetExpression = expression.substring(0, leftBraceIndex).trim();
+    const target = this.fromVariableExpression(targetExpression, parent);
 
-    const targetExpression = expression.substring(0, periodDelimiterIndex).trim();
-    const target = this.fromExpressionOrFunctionScope(targetExpression, parent);
+    const commaSeparatedArgs = expression.substring(leftBraceIndex + 1, rightBraceIndex).trim();
+    const argsList = this.getCommaSeparatedConstructs(commaSeparatedArgs);
+    const args = this.getMethodArguments(argsList, parent);
 
-    const leftBracketPosition = this.getLastSymbolPositionBefore(expression, Bracket.LEFT_BRACE, periodDelimiterIndex);
-    const rightBracketPosition = this.getPartnerBracePosition(expression, leftBracketPosition);
-    const argsExpression = expression.substring(leftBracketPosition + 1, rightBracketPosition);
-    const args = this.getMethodArguments(argsExpression, parent);
+    const attributeExpression = expression.substring(periodDelimiterIndex + 1);
+    const attribute = this.fromExpressionAttribute(attributeExpression, parent);
 
-    const attributeExpression = expression.substr(rightBracketPosition + 2);
-    const attribute = attributeExpression === '' ?
-      null : this.fromFunctionInvocationOrVariableExpression(attributeExpression, parent);
     return new FunctionInvocationExpression(parent, target, attribute, args);
   }
+
+  private fromExpressionOrFunctionScopeElements(args: Array<string>, parent: Scope): Array<AnyNotation>
 
   private getArgumentsFromFunctionInvocation(expression: string, parent: Scope, leftBracketPosition: number): Array<FunctionArgument> {
     const rightBracketPosition = this.partnerBracePosition(expression, leftBracketPosition);
@@ -1064,7 +1081,11 @@ export class ParserService {
   }
 
   private fromExpressionOrFunctionScope(expression: string, parent: Scope): AnyExpression | FunctionScope {
+    if (this.isAnyFunctionScope(expression)) {
+      return this.fromFunctionScope(expression, parent);
+    }
 
+    return this.fromExpression(expression, parent);
   }
 
 
@@ -1187,22 +1208,10 @@ export class ParserService {
     return -1;
   }
 
-  /***
-   * @param code the code snippet passed along must obey the valid syntactic
-   * contract and also be of the form argument1, arg2 ... where the args string is
-   * <b>not</b> enclosed by parentheses. The arguments although represented by
-   * strings here have to be valid parameters that can be passed in js methods.
-   * They can be Expressions (VE | FIE | GE | AIE), Notations
-   * @param parent The parent scope of the FunctionInvocation
-   */
-  public getMethodArguments(code: string, parent: Scope): Array<FunctionArgument> {
-    const args = this.getParsedMethodArguments(code);
-    let expressions: Array<FunctionArgument> = [];
-    for (let expression of args) {
-      expressions.push(this.fromExpressionOrNotation(expression, parent));
-    }
-
-    return expressions;
+  // todo really really todo
+  public getMethodArguments(args: Array<string>, parent: Scope): Array<FunctionArgument> {
+    const result: Array<FunctionArgument> = [];
+    return result;
   }
 
   private fromExpressionOrNotation(expression: string, parent: Scope): AnyExpression | AnyNotation {
