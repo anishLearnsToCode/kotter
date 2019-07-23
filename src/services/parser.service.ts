@@ -1101,8 +1101,10 @@ export class ParserService {
     return new Pair<DoWhileLoopScope, number>(doWhileLoop, rightBraceIndex);
   }
 
-  public parseFromSwitchBlock(expression: string, startIndex: number): Pair<SwitchBlock, number> {
-
+  public parseFromSwitchBlock(expression: string, startIndex: number, parent: Scope): Pair<SwitchBlock, number> {
+    const rightCurlyBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression.substring(startIndex), Bracket.RIGHT_CURLY_BRACE);
+    const switchBlock = this.fromSwitchBlock(expression.substring(startIndex, rightCurlyBraceIndex + 1).trim(), parent);
+    return new Pair<SwitchBlock, number>(switchBlock, rightCurlyBraceIndex);
   }
 
   public isScopeOrBlockKeyword(expression: string): boolean  {
