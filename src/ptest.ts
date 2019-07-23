@@ -29,3 +29,4 @@ const object = `{
 }`;
 const result = parser.fromObjectNotation(object, globalScope);
 console.log(result);
+

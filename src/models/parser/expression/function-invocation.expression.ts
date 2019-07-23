@@ -4,9 +4,10 @@ import {Codeable} from "../../codeable";
 import { FunctionArgument } from "../functionArgument";
 import {AnyExpression} from "./any-expression.type";
 import {FunctionScope} from "../scope/function.scope";
+import { AnyNotation } from "../notation/any-notation.type";
 
 
-export declare type FunctionInvocationExpressionTarget = AnyExpression | FunctionScope;
+export declare type FunctionInvocationExpressionTarget = AnyExpression | FunctionScope | AnyNotation ;
 
 
 export class FunctionInvocationExpression extends Expression<FunctionInvocationExpressionTarget> implements Codeable {
