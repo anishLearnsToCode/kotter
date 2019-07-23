@@ -1,12 +1,12 @@
-import {Delimiter} from "../models/parser/delimiter.enum";
-import {FunctionInvocationExpression} from "../models/parser/expression/function-invocation.expression";
-import {VariableExpression} from "../models/parser/expression/variable.expression";
-import {Scope} from "../models/parser/scope/scope.construct";
-import {Bracket} from "../models/parser/bracket.enum";
-import {GroupExpression, GroupExpressionTargetType} from "../models/parser/expression/group.expression";
-import {AnyExpression} from "../models/parser/expression/any-expression.type";
-import {FunctionArgument} from "../models/parser/functionArgument";
-import {AnyNotation} from "../models/parser/notation/any-notation.type";
+import { Delimiter } from "../models/parser/delimiter.enum";
+import { FunctionInvocationExpression } from "../models/parser/expression/function-invocation.expression";
+import { VariableExpression } from "../models/parser/expression/variable.expression";
+import { Scope } from "../models/parser/scope/scope.construct";
+import { Bracket } from "../models/parser/bracket.enum";
+import { GroupExpression, GroupExpressionTargetType } from "../models/parser/expression/group.expression";
+import { AnyExpression } from "../models/parser/expression/any-expression.type";
+import { FunctionArgument } from "../models/parser/functionArgument";
+import { AnyNotation } from "../models/parser/notation/any-notation.type";
 import {
   AssignmentExpression,
   AssignmentExpressionTargetType,
@@ -17,47 +17,48 @@ import {
   ArrayIndexExpression,
   ArrayIndexExpressionTargetType
 } from "../models/parser/expression/array-index.expression";
-import {AnySymbol} from "../models/parser/symbol.type";
-import {ObjectAttributeValue, ObjectNotation} from "../models/parser/notation/object.notation";
-import {Pair} from "../models/common/Pair";
-import {FunctionDeclarationScope} from "../models/parser/scope/function-declaration-scope";
-import {AnonymousFunctionScope} from "../models/parser/scope/anonymous-function.scope";
-import {ReservedKeywords} from "../models/reserved-keywords.enum";
-import {ExpressionAttribute} from "../models/parser/expression/expression.construct";
-import {StringNotation} from "../models/parser/notation/string.notation";
-import {NumberNotation} from "../models/parser/notation/number.notation";
-import {Statement} from "../models/parser/statement/statement.construct";
-import {Operator} from "../models/parser/operator/operator.enum";
-import {OperatorExpression} from "../models/parser/operator/operator.expression";
-import {FunctionParameter, FunctionScope} from "../models/parser/scope/function.scope";
-import {ArrayElement, ArrayNotation} from "../models/parser/notation/array-notation";
-import {BooleanNotation} from "../models/parser/notation/boolean.notation";
-import {LambdaExpression} from "../models/parser/expression/lambda-expression";
-import {Construct} from "../models/parser/construct";
-import {AnyDeconstructedExpression} from "../models/parser/instantiation/any-deconstructed-expression.type";
-import {ArrayDeconstructedExpression} from "../models/parser/instantiation/array-deconstructed-expression";
+import { AnySymbol } from "../models/parser/symbol.type";
+import { ObjectAttributeValue, ObjectNotation } from "../models/parser/notation/object.notation";
+import { Pair } from "../models/common/Pair";
+import { FunctionDeclarationScope } from "../models/parser/scope/function-declaration-scope";
+import { AnonymousFunctionScope } from "../models/parser/scope/anonymous-function.scope";
+import { ReservedKeywords } from "../models/reserved-keywords.enum";
+import { ExpressionAttribute } from "../models/parser/expression/expression.construct";
+import { StringNotation } from "../models/parser/notation/string.notation";
+import { NumberNotation } from "../models/parser/notation/number.notation";
+import { Statement } from "../models/parser/statement/statement.construct";
+import { Operator } from "../models/parser/operator/operator.enum";
+import { OperatorExpression } from "../models/parser/operator/operator.expression";
+import { FunctionParameter, FunctionScope } from "../models/parser/scope/function.scope";
+import { ArrayElement, ArrayNotation } from "../models/parser/notation/array-notation";
+import { BooleanNotation } from "../models/parser/notation/boolean.notation";
+import { LambdaExpression } from "../models/parser/expression/lambda-expression";
+import { Construct } from "../models/parser/construct";
+import { AnyDeconstructedExpression } from "../models/parser/instantiation/any-deconstructed-expression.type";
+import { ArrayDeconstructedExpression } from "../models/parser/instantiation/array-deconstructed-expression";
 import {
   ObjectDeconstructedElement,
   ObjectDeconstructedExpression
 } from "../models/parser/instantiation/object-deconstructed-expression";
-import {PairCodeable} from "../models/common/PairCodeable";
-import {AssignmentOperator} from "../models/parser/operator/assignment-operator.enum";
-import {GeneratorFunctionScope} from "../models/parser/scope/generator-function-scope";
-import {IfElseBlock} from "../models/parser/block/if-else-block.construct";
-import {ConditionalScope} from "../models/parser/scope/conditional.scope";
-import {IfConditionalScope} from "../models/parser/scope/if-conditional-scope";
-import {ElseIfConditionalScope} from "../models/parser/scope/else-if-conditional-scope";
-import {ElseCondition} from "../models/parser/scope/else-condition";
-import {DefaultConditionalScope} from "../models/parser/scope/default-conditional-scope";
-import {CaseConditionalScope} from "../models/parser/scope/CaseConditionalScope";
-import {SwitchBlock} from "../models/parser/block/switch-block";
-import {TryCatchBlock} from "../models/parser/block/try-cach-block.construct";
-import {TryScope} from "../models/parser/scope/try.scope";
-import {CatchScope} from "../models/parser/scope/catch.scope";
-import {ForLoop} from "../models/parser/scope/for.loop";
-import {ForEachLoopScope} from "../models/parser/scope/for-each-loop-scope";
-import {DoWhileLoopScope} from "../models/parser/scope/do-while-loop-scope";
-import {WhileLoopScope} from "../models/parser/scope/while-loop-scope";
+import { PairCodeable } from "../models/common/PairCodeable";
+import { AssignmentOperator } from "../models/parser/operator/assignment-operator.enum";
+import { GeneratorFunctionScope } from "../models/parser/scope/generator-function-scope";
+import { IfElseBlock } from "../models/parser/block/if-else-block.construct";
+import { ConditionalScope } from "../models/parser/scope/conditional.scope";
+import { IfConditionalScope } from "../models/parser/scope/if-conditional-scope";
+import { ElseIfConditionalScope } from "../models/parser/scope/else-if-conditional-scope";
+import { ElseCondition } from "../models/parser/scope/else-condition";
+import { DefaultConditionalScope } from "../models/parser/scope/default-conditional-scope";
+import { CaseConditionalScope } from "../models/parser/scope/CaseConditionalScope";
+import { SwitchBlock } from "../models/parser/block/switch-block";
+import { TryCatchBlock } from "../models/parser/block/try-cach-block.construct";
+import { TryScope } from "../models/parser/scope/try.scope";
+import { CatchScope } from "../models/parser/scope/catch.scope";
+import { ForLoop } from "../models/parser/scope/for.loop";
+import { ForEachLoopScope } from "../models/parser/scope/for-each-loop-scope";
+import { DoWhileLoopScope } from "../models/parser/scope/do-while-loop-scope";
+import { WhileLoopScope } from "../models/parser/scope/while-loop-scope";
+import { InstantiationExpression } from "../models/parser/instantiation/instantiation-expression.construct";
 
 export class ParserService {
   private static serviceInstance = new ParserService();
@@ -172,7 +173,7 @@ export class ParserService {
     AssignmentOperator.BITWISE_XOR_ASSIGNMENT
   ]);
 
-  private readonly BOOLEAN_VALUES = new Set<string>(['true', 'false']);
+  private readonly BOOLEAN_VALUES = new Set<string>(["true", "false"]);
 
   private readonly DIGITS: Set<number> = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 0]);
 
@@ -183,8 +184,14 @@ export class ParserService {
     ReservedKeywords.EXPORT
   ]);
 
-  private readonly CARRIAGE_RETURN: string = '\n';
-  private readonly WHITE_SPACE: string = ' ';
+  private readonly INSTANTIATION_KEYWORDS = new Set([
+    ReservedKeywords.LET,
+    ReservedKeywords.VAR,
+    ReservedKeywords.CONST
+  ]);
+
+  private readonly CARRIAGE_RETURN: string = "\n";
+  private readonly WHITE_SPACE: string = " ";
 
   /***
    * @param expression The expression to be parsed must not contain any /n/r new lien feed characters
@@ -275,14 +282,60 @@ export class ParserService {
   }
 
   private fromStatementOrExpressionOrNotationOrAssignment(expression: string, parent: Scope): Statement |
-    AnyExpression | AssignmentExpression | AnyNotation {
+    AnyExpression | AssignmentExpression | AnyNotation | InstantiationExpression {
 
     const tokens = this.getTokensFromStatement(expression);
     if (this.containsOperatorsOrStatementOperators(tokens)) {
       return this.fromStatement(tokens, parent);
     }
 
+    if (this.hasInstantiationOperators(tokens)) {
+      return this.fromInstantiationExpressionTokens(tokens, parent);
+    }
+
     return this.fromExpression(expression, parent);
+  }
+
+  private fromInstantiationExpressionTokens(tokens: Array<string>, parent: Scope): InstantiationExpression {
+    // @ts-ignore
+    const instantiationExpression = new InstantiationExpression(parent, [], this.fromInstantiationToken(tokens[0]));
+    const instantiationExpressions: Array<string> = this.getCommaSeparatedConstructsFromTokens(tokens.slice(1));
+    const result: Array<VariableExpression | AssignmentExpression> = [];
+    for (const expression of instantiationExpressions) {
+      if (this.isAssignmentExpression(expression)) {
+        result.push(this.fromAssignmentExpression(expression, parent));
+      } else {
+        result.push(this.fromVariableExpression(expression, parent));
+      }
+    }
+
+    instantiationExpression.instantiations = result;
+    return instantiationExpression;
+  }
+
+  private fromInstantiationToken(expression: string): ReservedKeywords.LET | ReservedKeywords.CONST |
+    ReservedKeywords.VAR | null {
+    switch (expression) {
+      case ReservedKeywords.LET: return ReservedKeywords.LET;
+      case ReservedKeywords.VAR: return ReservedKeywords.VAR;
+      case ReservedKeywords.CONST: return ReservedKeywords.CONST;
+    }
+
+    return null;
+  }
+
+  private hasInstantiationOperators(tokens: Array<string>): boolean {
+    for (const token of tokens) {
+      if (this.isInstantiationKeyword(token)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private isInstantiationKeyword(expression: string): boolean {
+    return this.INSTANTIATION_KEYWORDS.has(expression);
   }
 
   private containsOperatorsOrStatementOperators(tokens: Array<string>): boolean {
@@ -444,7 +497,7 @@ export class ParserService {
   private fromNumberNotation(expression: string, parent: Scope): NumberNotation {
     const lastDigitIndex = this.getLastDigitIndexInNumber(expression);
     const attributeExpression = expression.substring(lastDigitIndex + 2).trim();
-    const attribute = attributeExpression === '' ?
+    const attribute = attributeExpression === "" ?
       null : this.fromExpressionAttribute(attributeExpression, parent);
     const number = +expression.substring(0, lastDigitIndex + 1).trim();
 
@@ -485,7 +538,7 @@ export class ParserService {
     const partnerDelimiterIndex = this.getPartnerLiteral(expression, 0);
 
     const attributeExpression = expression.substring(partnerDelimiterIndex + 2).trim();
-    const attribute = attributeExpression === '' ?
+    const attribute = attributeExpression === "" ?
       null : this.fromExpressionAttribute(attributeExpression, parent);
 
     return new StringNotation(parent, expression.substring(1, partnerDelimiterIndex), attribute, delimiter);
@@ -520,7 +573,7 @@ export class ParserService {
     const rightBracketPosition = this.getPartnerBracePosition(expression, 0);
     const codeInsideBrackets = expression.substring(1, rightBracketPosition).trim();
     const attributeExpression = expression.substr(rightBracketPosition + 2).trim();
-    const attribute = attributeExpression === '' ?
+    const attribute = attributeExpression === "" ?
       null : this.fromFunctionInvocationOrVariableExpression(attributeExpression, parent);
 
     return new GroupExpression(
@@ -722,7 +775,7 @@ export class ParserService {
     const periodDelimiterIndex = this.getFirstSymbolPositionAtTopLevel(expression, Delimiter.PERIOD);
     const target = expression.substring(0, periodDelimiterIndex).trim();
     const attributeExpression = expression.substring(periodDelimiterIndex + 1);
-    const attribute = attributeExpression !== '' ?
+    const attribute = attributeExpression !== "" ?
       this.fromExpressionAttribute(attributeExpression, parent) : null;
 
     return new VariableExpression(parent, target, attribute);
@@ -802,7 +855,7 @@ export class ParserService {
         if (character === Bracket.LEFT_CURLY_BRACE) {
           return false;
         }
-        if (character !== ' ') {
+        if (character !== " ") {
           break;
         }
       }
@@ -1044,7 +1097,7 @@ export class ParserService {
   }
 
   private getPreviousContiguousOperators(expression: string, from: number): string {
-    let result = '';
+    let result = "";
     for (let index = from ; index >= 0 ; index--) {
       if (this.isOperator(expression.charAt(index))) {
         result += expression.charAt(index);
@@ -1057,7 +1110,7 @@ export class ParserService {
   }
 
   private fromGeneratorFunctionScope(expression: string, parent: Scope): GeneratorFunctionScope {
-    const generatorFunction = new GeneratorFunctionScope(parent, [], [], '');
+    const generatorFunction = new GeneratorFunctionScope(parent, [], [], "");
     const leftBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_BRACE);
     const rightBraceIndex = this.partnerBracePosition(expression, leftBraceIndex);
     generatorFunction.name = expression.substring(ReservedKeywords.GENERATOR_FUNCTION.length, leftBraceIndex).trim();
@@ -1213,7 +1266,7 @@ export class ParserService {
   }
 
   private getFirstTokenName(code: string): string {
-    let token = '';
+    let token = "";
     for (let character of code) {
       if (this.isDelimiter(character) || this.isBracket(character) || this.isWhitespaceCharacter(character)) {
         break;
@@ -1446,25 +1499,75 @@ export class ParserService {
         continue;
       }
 
-      endIndex = this.getPreviousWordStartIndex(expression, colonIndexes[index + 1]) - 1;
+      endIndex = this.getPreviousWordStartAndEndIndex(expression, colonIndexes[index + 1]).getValue() - 1;
     }
 
     return result;
   }
 
-  private getPreviousWordStartIndex(expression: string, from: number): number {
-    for (let index = from, encounteredWhitespace = !this.isWhitespaceCharacter(expression.charAt(from - 1)) ; index >= 0 ; index--) {
+  private getNextWordStartAndEndIndex(expression: string, from: number): Pair<number, number> {
+    let startIndex = -1;
+    let encounteredWhitespace = false;
+    let wordStarted = false;
+    for (let index = from ; index < expression.length ; index++) {
       const character = expression.charAt(index);
 
-      if (this.isWhitespaceCharacter(character)) {
-        if (encounteredWhitespace) {
-          return index + 1;
+      if (wordStarted) {
+        if (this.isWhitespaceCharacter(character)) {
+          return new Pair<number, number>(startIndex, index - 1);
         }
-        encounteredWhitespace = true;
+        continue;
+      } else {
+        if (this.isWhitespaceCharacter(character)) {
+          encounteredWhitespace = true;
+          continue;
+        }
+      }
+
+      if (encounteredWhitespace) {
+        if (!this.isWhitespaceCharacter(character)) {
+          wordStarted = true;
+          startIndex = index;
+        }
       }
     }
 
-    return -1;
+    return new Pair<number, number>(-1, -1);
+  }
+
+  /***
+   * @return returns a pair in the form (startIndex, endIndex)
+   * @param expression
+   * @param from
+   */
+  private getPreviousWordStartAndEndIndex(expression: string, from: number): Pair<number, number> {
+    let endIndex = -1;
+    let encounteredWhitespace = false;
+    let wordStarted = false;
+    for (let index = from ; index >= 0 ; index--) {
+      const character = expression.charAt(index);
+
+      if (wordStarted) {
+        if (this.isWhitespaceCharacter(character)) {
+          return new Pair<number, number>(index + 1, endIndex);
+        }
+        continue;
+      } else {
+        if (this.isWhitespaceCharacter(character)) {
+          encounteredWhitespace = true;
+          continue;
+        }
+      }
+
+      if (encounteredWhitespace) {
+        if (!this.isWhitespaceCharacter(character)) {
+          wordStarted = true;
+          endIndex = index;
+        }
+      }
+    }
+
+    return new Pair<number, number>(-1, -1);
   }
 
   private fromTryCatchBlock(expression: string, parent: Scope): TryCatchBlock {
@@ -1503,7 +1606,7 @@ export class ParserService {
   }
 
   private fromCatchScope(expression: string, parent: Scope): CatchScope {
-    const catchScope = new CatchScope(parent, [], '');
+    const catchScope = new CatchScope(parent, [], "");
     const leftBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_BRACE);
     const rightBraceIndex = this.getPartnerBracePosition(expression, leftBraceIndex);
     catchScope.condition = expression.substring(leftBraceIndex + 1, rightBraceIndex).trim();
@@ -1552,7 +1655,7 @@ export class ParserService {
   }
 
   private fromElseScope (expression: string, parent: Scope): ElseCondition {
-    const elseScope = new IfConditionalScope(parent, [], '');
+    const elseScope = new IfConditionalScope(parent, [], "");
     const leftCurlyBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_CURLY_BRACE);
     const rightCurlyBraceIndex = this.getPartnerBracePosition(expression, leftCurlyBraceIndex);
     elseScope.body = this.fromScopeBody(expression.substring(leftCurlyBraceIndex + 1, rightCurlyBraceIndex).trim(), elseScope);
@@ -1561,7 +1664,7 @@ export class ParserService {
   }
 
   private fromElseIfScope(expression: string, parent: Scope): ElseIfConditionalScope {
-    const elseIfScope = new ElseIfConditionalScope(parent, [], '');
+    const elseIfScope = new ElseIfConditionalScope(parent, [], "");
     const leftBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_BRACE);
     const rightBraceIndex = this.getPartnerBracePosition(expression, leftBraceIndex);
     elseIfScope.condition = expression.substring(leftBraceIndex + 1, rightBraceIndex).trim();
@@ -1574,7 +1677,7 @@ export class ParserService {
   }
 
   private fromIfScopeExpression(expression: string, parent: Scope): IfConditionalScope {
-    const ifScope = new IfConditionalScope(parent, [], '');
+    const ifScope = new IfConditionalScope(parent, [], "");
     const leftBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_BRACE);
     const rightBraceIndex = this.getPartnerBracePosition(expression, leftBraceIndex);
     ifScope.condition = expression.substring(leftBraceIndex + 1, rightBraceIndex).trim();
@@ -1595,7 +1698,7 @@ export class ParserService {
   }
 
   private fromCaseConditionalScope(expression: string, parent: Scope): CaseConditionalScope {
-    const caseScope = new CaseConditionalScope(parent, [], '');
+    const caseScope = new CaseConditionalScope(parent, [], "");
     const colonIndex = this.getFirstSymbolPositionAtTopLevel(expression, Delimiter.COLON);
     caseScope.condition = expression.substring(ReservedKeywords.CASE.length, colonIndex).trim();
     caseScope.body = this.fromScopeBody(expression.substring(colonIndex + 1).trim(), caseScope);
@@ -1654,7 +1757,6 @@ export class ParserService {
   }
 
   /***
-   *
    * @param expression It has already been determined that the scope is either for or
    * foreach and hence must start with a for
    * @param parent
@@ -1690,16 +1792,58 @@ export class ParserService {
   }
 
   private fromForLoopScope(expression: string, parent: Scope): ForLoop {
+    const leftBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_BRACE);
+    const rightBraceIndex = this.getPartnerBracePosition(expression, leftBraceIndex);
+    const forLoop = new ForLoop(parent, [], "", [], []);
+    const loopConditionalExpression = expression.substring(leftBraceIndex + 1, rightBraceIndex);
+    const conditionalExpressions: Array<string> = this.getDelimiterSeparatedConstructs(loopConditionalExpression, Delimiter.SEMI_COLON);
+    const preStatementExpressions = this.getCommaSeparatedConstructs(conditionalExpressions[0]);
+    const postStatements = this.getCommaSeparatedConstructs(conditionalExpressions[2]);
+    forLoop.statement = conditionalExpressions[1];
+    forLoop.preStatements = this.fromStatementOrExpressionOrNotationOrAssignmentElements(preStatementExpressions, forLoop);
+    forLoop.postStatements = this.fromStatementOrExpressionOrNotationOrAssignmentElements(preStatementExpressions, forLoop);
 
+    const leftCurlyBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_CURLY_BRACE);
+    const rightCurlyBraceIndex = this.getPartnerBracePosition(expression, leftCurlyBraceIndex);
+    forLoop.body = this.fromScopeBody(expression.substring(leftCurlyBraceIndex + 1, rightCurlyBraceIndex).trim(), forLoop);
   }
 
   private fromDoWhileLoopScope(expression: string, parent: Scope): DoWhileLoopScope {
     const leftCurlyBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_CURLY_BRACE);
-    const rightCurlyBraceIndex = 
+    const rightCurlyBraceIndex = this.getPartnerBracePosition(expression, leftCurlyBraceIndex);
+    const whileEndIndex = this.getPreviousWordStartAndEndIndex(expression, rightCurlyBraceIndex).getValue();
+    const leftBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression.substring(whileEndIndex), Bracket.LEFT_BRACE);
+    const rightBraceIndex = this.getPartnerBracePosition(expression, leftBraceIndex);
+    const doWhileLoop = new DoWhileLoopScope(parent, [], expression.substring(leftBraceIndex + 1, rightBraceIndex).trim());
+    doWhileLoop.body = this.fromScopeBody(expression.substring(leftCurlyBraceIndex + 1, rightCurlyBraceIndex).trim(), doWhileLoop);
+
+    return doWhileLoop;
   }
 
   private fromWhileLoopScope(expression: string, parent: Scope): WhileLoopScope {
+    const leftBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_BRACE);
+    const rightBraceIndex = this.getPartnerBracePosition(expression, leftBraceIndex);
+    const condition = expression.substring(leftBraceIndex + 1, rightBraceIndex).trim();
+    const leftCurlyBraceIndex = this.getFirstSymbolPositionAtTopLevel(expression, Bracket.LEFT_CURLY_BRACE);
+    const rightCurlyBraceIndex = this.getPartnerBracePosition(expression, leftCurlyBraceIndex);
+    const whileLoop = new WhileLoopScope(parent, [], condition);
+    whileLoop.body = this.fromScopeBody(expression.substring(leftCurlyBraceIndex + 1, rightCurlyBraceIndex).trim(), whileLoop);
 
+    return whileLoop;
+  }
+
+  private getCommaSeparatedConstructsFromTokens(tokens: Array<string>): Array<string> {
+    const result = [];
+    for (let index = 0, expression = '' ; index < tokens.length ; index++) {
+      if (tokens[index] === Delimiter.COMMA) {
+        result.push(expression);
+        expression = '';
+      } else {
+        expression += tokens[index];
+      }
+    }
+
+    return result;
   }
 
   private getCommaSeparatedConstructs(expression: string): Array<string> {
@@ -1727,7 +1871,7 @@ export class ParserService {
   private getParsedMethodArguments(expression: string): Array<string> {
     expression = expression.trim();
     const args: Array<string> = [];
-    if (expression === '') {
+    if (expression === "") {
       return args;
     }
 
@@ -1792,7 +1936,7 @@ export class ParserService {
         }
 
         if (this.isLeftBracket(character)) {
-          bracketStack++
+          bracketStack++;
         }
 
         if (this.isRightBracket(character)) {
@@ -1839,6 +1983,6 @@ export class ParserService {
   }
 
   public removeAllLineBreaks(expression: string): string {
-    return expression.replace(/(\r\n|\n|\r)/gm, ' ');
+    return expression.replace(/(\r\n|\n|\r)/gm, " ");
   }
 }
